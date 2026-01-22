@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react';
 import type { BreadcrumbItem } from './navigation';
-import type { Auth } from './auth'
+import type { User } from './auth'
 
 
 //Props for main app
 export type AppLayoutProps = {
     children: ReactNode;
     breadcrumbs?: BreadcrumbItem[];
-    auth?: Auth;
+    user?: User;
 };
 
 //prps for login

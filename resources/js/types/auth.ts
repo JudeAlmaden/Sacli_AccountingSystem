@@ -7,15 +7,9 @@ export type User = {
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
-    [key: string]: unknown;
-};
-
-export type Auth = {
-    id: number;
-    name: string;
-    email: string;
     roles: string[];
     permissions: string[]
+    [key: string]: unknown;
 };
 
 export type TwoFactorSetupData = {
@@ -26,3 +20,7 @@ export type TwoFactorSetupData = {
 export type TwoFactorSecretKey = {
     secretKey: string;
 };
+
+interface PageProps {
+    user: User;
+}

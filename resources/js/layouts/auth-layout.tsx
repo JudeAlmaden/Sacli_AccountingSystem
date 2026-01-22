@@ -1,5 +1,5 @@
 //Auth layout is the layout shown on login page
-import AuthLayoutTemplate from '@/layouts/auth/auth-simple-layout';
+import AuthLayoutTemplate from '@/layouts/auth/auth-split-layout';
 
 
 export default function AuthLayout({

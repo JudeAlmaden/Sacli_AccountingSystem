@@ -5,24 +5,16 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
 Route::get('/', function () {
-    return Inertia::render('welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return Inertia::render('auth/login');
 })->name('home');
 
-//Developer note!
+//Main Login View
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
-        $user = Auth::user();
-        return Inertia::render('dashboard', [
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'roles' => $user->getRoleNames()->toArray(), 
-                'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
-            ]
-        ]);
+        return Inertia::render('dashboard');
     })->name('dashboard');
 });
 

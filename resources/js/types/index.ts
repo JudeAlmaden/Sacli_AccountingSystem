@@ -1,12 +1,11 @@
 export type * from './auth';
 export type * from './navigation';
 export type * from './ui';
-
-import type { Auth } from './auth';
+import type { User } from './auth';
 
 export type SharedData = {
     name: string;
-    auth: Auth;
+    user: User;
     sidebarOpen: boolean;
     [key: string]: unknown;
 };
