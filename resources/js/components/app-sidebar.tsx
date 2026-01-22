@@ -13,48 +13,37 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, User, FileText, ShieldCheck } from 'lucide-react';
 import AppLogo from './app-logo';
 import type { SharedData } from '@/types';
-
-/* ======================
-   NAV CONFIG PER ROLE
-====================== */
-
-const roleNavMap: Record<string, NavItem[]> = {
-    admin: [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-        { title: 'Users and Accounts', href: '', icon: LayoutGrid },
-    ],
-    'accounting assistant': [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-        { title: 'Generate Check Vouchers', href: '', icon: LayoutGrid },
-    ],
-    'accounting head': [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-        { title: 'Chart of Accounts', href: '', icon: LayoutGrid },
-        { title: 'To Review', href: '', icon: LayoutGrid },
-    ],
-    auditor: [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-        { title: 'To Review', href: '', icon: LayoutGrid },
-    ],
-    SVP: [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-    ],
-};
-
-/* ======================
-   SIDEBAR COMPONENT
-====================== */
 
 export function AppSidebar() {
     const { user } = usePage<SharedData>().props;
 
-    // Pick the first role that matches our mapping
-    const navItems: NavItem[] = user
-        ? user.roles.reduce<NavItem[]>((items, role) => items.length ? items : (roleNavMap[role] || []), [])
-        : [];
+    /* ======================
+    NAV CONFIG PER ROLE
+    ====================== */
+    const navItemsByRole: Record<string, string[]> = {
+        'admin': ['dashboard', 'users'],
+        'accounting assistant': ['dashboard', 'vouchers'],
+        'accounting head': ['dashboard', 'chartAccounts', 'toReview'],
+        'auditor': ['dashboard', 'toReview'],
+        'SVP': ['dashboard'],
+    };
+
+    const navItemDetails: Record<string, NavItem> = {
+        dashboard: { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+        users: { title: 'Users and Accounts', href: '', icon: User },
+        vouchers: { title: 'Generate Check Vouchers', href: '', icon: FileText },
+        chartAccounts: { title: 'Chart of Accounts', href: '', icon: FileText },
+        toReview: { title: 'To Review', href: '', icon: ShieldCheck },
+    };
+
+    const navItems = user?.roles
+        .map(role => navItemsByRole[role] || [])
+        .flat()
+        .map(key => navItemDetails[key])
+        .filter(Boolean);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
