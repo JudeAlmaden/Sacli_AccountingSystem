@@ -3,7 +3,7 @@ export interface Account {
     name: string;
     email: string;
     roles: Role[];
-    status: boolean;
+    status: string;
 }
 
 export interface Role {
