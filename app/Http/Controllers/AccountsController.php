@@ -16,13 +16,17 @@ class AccountsController extends Controller
             'page'   => 'nullable|integer|min:1',
             'limit'  => 'nullable|integer|min:1|max:15',
         ]);
-        $account = Account::get()
-        ->when($validated['account_name'] ?? null, fn ($q, $search) =>
-            $q->where('account_name', 'like', "%{$search}%")
-        )
-        ->when($validated['page'] ?? null, fn ($q, $page) =>
-            $q->paginate($validated['limit'] ?? 15, ['*'], 'page', $page)
-        );
+        $query = Account::query();
+
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('account_name', 'like', "%{$search}%")
+                  ->orWhere('account_code', 'like', "%{$search}%");
+            });
+        }
+
+        $account = $query->paginate($validated['limit'] ?? 15);
 
         
         return response()->json($account);

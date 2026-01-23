@@ -59,7 +59,7 @@ export default function ChartOfAccounts() {
         })
             .then(res => res.json())
             .then(data => {
-                setAccounts(data); // Controller returns generic array or collection
+                setAccounts(data.data);
                 setIsLoading(false);
             })
             .catch(err => {
