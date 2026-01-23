@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
+use Database\Seeders\ChartOfAccountsSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolesSeeder::class,
+            ChartOfAccountsSeeder::class,
         ]);
         
         //We make a admin role, this is how we will make accounts in the future <3
@@ -29,5 +31,13 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@example.com',
             'password' => Hash::make('password'),
         ])->assignRole('admin');   
+
+        //We make a admin role, this is how we will make accounts in the future <3
+        User::truncate();
+        User::factory()->create([
+            'name' => 'accounting head',
+            'email' => 'head@example.com',
+            'password' => Hash::make('password'),
+        ])->assignRole('accounting head');   
     }
 }
