@@ -4,7 +4,8 @@ import type { BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import type { Account } from '@/types/database';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -14,7 +15,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard() {
-    const token = document.querySelector('meta[name="csrf-token"]').content;
+    //Get the CSRF token from the meta tag
+    const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+    const token = meta?.content || '';
+
+    //Get the accounts from the API
+    const [users, setUsers] = useState<Account[]>([]);
 
     useEffect(() => {
         fetch('/api/accounts', {
@@ -25,7 +31,7 @@ export default function Dashboard() {
                 'X-CSRF-TOKEN': token,
             },
         }).then(res => res.json())
-            .then(data => console.log(data));
+            .then(data => setUsers(data.data));
     }, []);
 
     return (
@@ -45,13 +51,15 @@ export default function Dashboard() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        <TableRow>
-                            <TableCell>John Doe</TableCell>
-                            <TableCell>Admin</TableCell>
-                            <TableCell>
-                                <Button variant="outline">Edit</Button>
-                            </TableCell>
-                        </TableRow>
+                        {users.map((user) => (
+                            <TableRow key={user.id}>
+                                <TableCell>{user.name}</TableCell>
+                                <TableCell>{user.role}</TableCell>
+                                <TableCell>
+                                    <Button variant="outline">Edit</Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
             </div>

@@ -5,10 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
-use App\Models\Account;
 use Illuminate\Support\Facades\Hash;
 
-class AccountController extends Controller
+class UserController extends Controller
 {
     /**
      * Display a paginated list of accounts.
@@ -22,11 +21,12 @@ class AccountController extends Controller
             'email'  => 'nullable|string',
             'page'   => 'nullable|integer|min:1',
             'limit'  => 'nullable|integer|min:1|max:15',
+            'status'=>  'nullable|string|in:active,inactive',
         ]);
 
         $limit = $validated['limit'] ?? 10;
 
-        $accounts = Account::with('roles')
+        $accounts = User::with('roles')
             ->when($validated['search'] ?? null, fn ($q, $search) =>
                 $q->where('name', 'like', "%{$search}%")
             )
@@ -53,6 +53,7 @@ class AccountController extends Controller
                 'email'    => 'required|string|email|max:255|unique:users,email',
                 'password' => 'required|string|min:8|confirmed',
                 'role'     => 'required|string|in:admin,user',
+                'status'   => 'nullable|string|in:active,inactive',
             ],
             [
                 'email.unique'       => 'This email is already registered.',
@@ -64,6 +65,7 @@ class AccountController extends Controller
         $user = User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
+            'status'   => $validated['status'] ?? 'active',
             'password' => Hash::make($validated['password']),
             'role'     => $validated['role'],
         ]);
@@ -75,6 +77,16 @@ class AccountController extends Controller
     }
 
     /**
+     * Display the specified account.
+     */
+    function show(Request $request, User $user){
+        $validated = $request->validate([
+            'id' => 'required|exists:users,id',
+        ]);
+        $user = User::find($validated['id']);
+        return response()->json($user);
+    }
+    /**
      * Update an existing account in the database.
      */
     function update(Request $request, User $user){
@@ -82,6 +94,7 @@ class AccountController extends Controller
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
+            'status'   => 'nullable|string|in:active,inactive',
             'role'     => 'required|string|in:admin,user',
         ]);
 
@@ -89,6 +102,7 @@ class AccountController extends Controller
             'name'  => $validated['name'],
             'email' => $validated['email'],
             'role'  => $validated['role'],
+            'status'=>$validated['status'] ?? 'active',
         ]);
 
         // Only update password if provided
