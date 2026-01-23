@@ -24,7 +24,7 @@ export function AppSidebar() {
     NAV CONFIG PER ROLE
     ====================== */
     const navItemsByRole: Record<string, string[]> = {
-        'admin': ['dashboard', 'users'],
+        'admin': ['dashboard', 'users', 'accounts'],
         'accounting assistant': ['dashboard', 'disbursements'],
         'accounting head': ['dashboard', 'chartAccounts', 'toReview', 'disbursements'],
         'auditor': ['dashboard', 'toReview'],
@@ -33,9 +33,9 @@ export function AppSidebar() {
 
     const navItemDetails: Record<string, NavItem> = {
         dashboard: { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
-        users: { title: 'Users and Accounts', href: route('accounts'), icon: User },
+        users: { title: 'Users and Accounts (ADMIN)', href: route('users'), icon: User },
         disbursements: { title: 'Generate Check Vouchers', href: '', icon: FileText },
-        chartAccounts: { title: 'Chart of Accounts', href: '', icon: FileText },
+        chartAccounts: { title: 'Chart of Accounts (HEAD)', href: route('accounts'), icon: FileText },
         toReview: { title: 'To Review', href: '', icon: ShieldCheck },
     };
 

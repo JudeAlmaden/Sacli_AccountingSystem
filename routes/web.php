@@ -16,6 +16,7 @@ Route::get('/', function () {
 })->name('home');
 
 //Here are the views for all the users
+//NO ROLE VERIFICATION HAS BEEN APPLIED YET  
 Route::middleware(['auth', 'verified'])->group(function () {
     //Default dashboard, same for all roles
     Route::get('dashboard', function () {
@@ -24,9 +25,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     //Views for the admin role
     Route::get('/dashboard/accounts', function () {
-        return Inertia::render('admin/accounts');
-    })->name('accounts');
+        return Inertia::render('admin/users');
+    })->name('users');
 
+    Route::get('/dashboard/chart-of-accounts',function(){
+        return Inertia::render('accounting-head/accounts');
+    })->name('accounts');
 });
 
 
