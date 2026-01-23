@@ -1,68 +1,284 @@
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
+import { Head, usePage } from '@inertiajs/react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useEffect, useState } from 'react';
 import type { Account } from '@/types/database';
+import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard().url,
+        href: route('dashboard'),
+    },
+    {
+        title: 'Chart of Accounts',
+        href: route('accounts'),
     },
 ];
 
-export default function Dashboard() {
-    //Get the CSRF token from the meta tag
+export default function ChartOfAccounts() {
+    // Get the CSRF token manually if needed, or rely on Laravel's default handling if axios was used.
+    // Since we are using fetch, we need to pass the CSRF token.
     const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
     const token = meta?.content || '';
 
-    //Get the accounts from the API
-    const [users, setUsers] = useState<Account[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetch('/api/accounts', {
+    // Create Modal State
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        account_name: '',
+        account_code: '',
+        account_type: '',
+        account_description: '',
+    });
+    const [isCreating, setIsCreating] = useState(false);
+    const [createErrors, setCreateErrors] = useState<any>({});
+
+    // Delete Modal State
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const fetchAccounts = () => {
+        setIsLoading(true);
+        fetch(route('accounts.index'), {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': token,
             },
-        }).then(res => res.json())
-            .then(data => setUsers(data.data));
+        })
+            .then(res => res.json())
+            .then(data => {
+                setAccounts(data); // Controller returns generic array or collection
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to fetch accounts', err);
+                setIsLoading(false);
+            });
+    };
 
+    useEffect(() => {
+        fetchAccounts();
     }, []);
+
+    const handleCreateSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreating(true);
+        setCreateErrors({});
+
+        fetch(route('accounts.store'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+            body: JSON.stringify(createForm),
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) {
+                    if (res.status === 422) {
+                        setCreateErrors(data.errors);
+                    } else {
+                        alert('Error creating account');
+                    }
+                    throw new Error('Validation failed');
+                }
+                return data;
+            })
+            .then(() => {
+                setIsCreateOpen(false);
+                setCreateForm({
+                    account_name: '',
+                    account_code: '',
+                    account_type: '',
+                    account_description: '',
+                });
+                fetchAccounts();
+            })
+            .catch(() => { })
+            .finally(() => setIsCreating(false));
+    };
+
+    const handleDelete = () => {
+        if (!accountToDelete) return;
+
+        setIsDeleting(true);
+        fetch(route('accounts.destroy', accountToDelete.id), {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+        })
+            .then(res => {
+                if (res.ok) {
+                    setIsDeleteOpen(false);
+                    setAccountToDelete(null);
+                    fetchAccounts();
+                } else {
+                    alert('Failed to delete account');
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => setIsDeleting(false));
+    };
+
+    const confirmDelete = (account: Account) => {
+        setAccountToDelete(account);
+        setIsDeleteOpen(true);
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Accounts" />
-            <div className="flex flex-col gap-4 p-16">
+            <Head title="Chart of Accounts" />
+            <div className="flex flex-col gap-6 p-8">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Accounts</h2>
-                    <Button variant="outline">Add Account</Button>
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Chart of Accounts</h2>
+                        <p className="text-muted-foreground">Manage your financial accounts and structure.</p>
+                    </div>
+
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button>Add Account</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Create New Account</DialogTitle>
+                                <DialogDescription>
+                                    Add a new account to your chart of accounts. Click save when you're done.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleCreateSubmit} className="space-y-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="account_name">Account Name</Label>
+                                    <Input
+                                        id="account_name"
+                                        value={createForm.account_name}
+                                        onChange={e => setCreateForm({ ...createForm, account_name: e.target.value })}
+                                        placeholder="e.g. Cash on Hand"
+                                        required
+                                    />
+                                    {createErrors.account_name && <p className="text-red-500 text-sm">{createErrors.account_name[0]}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="account_code">Account Code</Label>
+                                    <Input
+                                        id="account_code"
+                                        value={createForm.account_code}
+                                        onChange={e => setCreateForm({ ...createForm, account_code: e.target.value })}
+                                        placeholder="e.g. 1001"
+                                        required
+                                    />
+                                    {createErrors.account_code && <p className="text-red-500 text-sm">{createErrors.account_code[0]}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="account_type">Account Type</Label>
+                                    <Input
+                                        id="account_type"
+                                        value={createForm.account_type}
+                                        onChange={e => setCreateForm({ ...createForm, account_type: e.target.value })}
+                                        placeholder="e.g. Asset"
+                                        required
+                                    />
+                                    {createErrors.account_type && <p className="text-red-500 text-sm">{createErrors.account_type[0]}</p>}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="account_description">Description (Optional)</Label>
+                                    <Input
+                                        id="account_description"
+                                        value={createForm.account_description}
+                                        onChange={e => setCreateForm({ ...createForm, account_description: e.target.value })}
+                                        placeholder="Brief description"
+                                    />
+                                </div>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+                                    <Button type="submit" disabled={isCreating}>
+                                        {isCreating ? 'Saving...' : 'Save Account'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
-                <Table className="w-full">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {users.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.roles.map((role) => role.name).join(', ')}</TableCell>
-                                <TableCell>
-                                    <Button variant="outline">Edit</Button>
-                                </TableCell>
+
+                <div className="rounded-md border bg-card">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Description</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24">Loading accounts...</TableCell>
+                                </TableRow>
+                            ) : accounts.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">No accounts found.</TableCell>
+                                </TableRow>
+                            ) : (
+                                accounts.map((account) => (
+                                    <TableRow key={account.id}>
+                                        <TableCell className="font-medium">{account.account_code}</TableCell>
+                                        <TableCell>{account.account_name}</TableCell>
+                                        <TableCell>{account.account_type}</TableCell>
+                                        <TableCell className="text-muted-foreground">{account.account_description || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground">{account.status}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => confirmDelete(account)}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Delete Confirmation Dialog */}
+                <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Delete Account</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to delete <strong>{accountToDelete?.account_name}</strong>? This action cannot be undone.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
         </AppLayout>
     );

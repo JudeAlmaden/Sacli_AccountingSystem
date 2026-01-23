@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Account;
 
-class ChartOfAccountsController extends Controller
+class AccountsController extends Controller
 {
     /**
     * List all chart of accounts
@@ -24,6 +24,7 @@ class ChartOfAccountsController extends Controller
             $q->paginate($validated['limit'] ?? 15, ['*'], 'page', $page)
         );
 
+        
         return response()->json($account);
     }
 

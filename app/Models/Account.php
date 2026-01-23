@@ -11,5 +11,6 @@ class Account extends Model
         'account_description',
         'account_code',
         'account_type',
+        'status',
     ];
 }

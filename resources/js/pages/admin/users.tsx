@@ -5,7 +5,8 @@ import { Head } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react';
-import type { Account } from '@/types/database';
+import type { User } from '@/types/database';
+import { route } from 'ziggy-js';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -20,10 +21,10 @@ export default function Dashboard() {
     const token = meta?.content || '';
 
     //Get the accounts from the API
-    const [users, setUsers] = useState<Account[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
-        fetch('/api/accounts', {
+        fetch(route('users.index'), {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -40,8 +41,8 @@ export default function Dashboard() {
             <Head title="Accounts" />
             <div className="flex flex-col gap-4 p-16">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Accounts</h2>
-                    <Button variant="outline">Add Account</Button>
+                    <h2 className="text-2xl font-bold">Users</h2>
+                    <Button variant="outline">Add User</Button>
                 </div>
                 <Table className="w-full">
                     <TableHeader>

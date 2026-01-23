@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('account_description');
             $table->string('account_code');
             $table->string('account_type');
+            $table->string('status')->default('active');
             $table->timestamps();
         });
     }
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chart_of_accounts');
+        Schema::dropIfExists('accounts');
     }
 };
