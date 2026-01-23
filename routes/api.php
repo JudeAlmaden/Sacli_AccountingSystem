@@ -14,6 +14,8 @@ Route::get('/user', function (Request $request) {
 ===================*/
 //For account management
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+Route::get('/users/stats', [UserController::class, 'stats'])->name('users.stats');
+
     // Accounts Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index'); // List all accounts
     Route::post('/users/store', [UserController::class, 'store'])->name('users.store');      // Save new account

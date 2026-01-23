@@ -7,10 +7,28 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Facades\Permission;
-use Spatie\Permission\Facades\Role;
+use Spatie\Permission\Facades\Role;       
+use Illuminate\Validation\Rule;                                                                      
 
 class UserController extends Controller
 {
+
+ // For Stat Card
+    function stats()
+    {
+        $totalUsers = User::count();
+        $activeUsers = User::where('status', 'active')->count();
+        $inactiveUsers = User::where('status', 'inactive')->count();
+        $adminUsers = User::role('admin')->count();
+        
+        return response()->json([
+            'total_users' => $totalUsers,
+            'active_users' => $activeUsers,
+            'inactive_users' => $inactiveUsers,
+            'admin_users' => $adminUsers,
+        ]);
+    }
+
     /**
      * Display a paginated list of accounts.
      * Supports filtering by search, role, email.
@@ -44,9 +62,9 @@ class UserController extends Controller
             ->when($validated['status'] ?? null, fn ($q, $status) =>
                 $q->where('status', $status)
             )
-            ->paginate($limit);
+            ->get(); // Changed from paginate() to get()
 
-        return response()->json($users);
+        return response()->json(['data' => $users]);
     }
 
     /**

@@ -2,8 +2,8 @@ export interface User {
     id: number;
     name: string;
     email: string;
-    roles: Role[];
-    status: boolean;
+    roles: Role[];                                                                                  
+    status: string;
 }
 
 export interface Account {
