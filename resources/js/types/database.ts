@@ -2,6 +2,11 @@ export interface Account {
     id: number;
     name: string;
     email: string;
-    role: string;
-    status: string;
+    roles: Role[];
+    status: boolean;
+}
+
+export interface Role {
+    id: number;
+    name: string;
 }

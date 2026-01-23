@@ -26,7 +26,7 @@ class UserController extends Controller
 
         $limit = $validated['limit'] ?? 10;
 
-        $accounts = User::with('roles')
+        $users = User::with('roles')
             ->when($validated['search'] ?? null, fn ($q, $search) =>
                 $q->where('name', 'like', "%{$search}%")
             )
@@ -38,9 +38,8 @@ class UserController extends Controller
             )
             ->paginate($limit);
 
-        return response()->json($accounts);
+        return response()->json($users);
     }
-
 
     /**
      * Store a newly created account in the database.
@@ -86,6 +85,7 @@ class UserController extends Controller
         $user = User::find($validated['id']);
         return response()->json($user);
     }
+
     /**
      * Update an existing account in the database.
      */

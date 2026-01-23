@@ -32,6 +32,7 @@ export default function Dashboard() {
             },
         }).then(res => res.json())
             .then(data => setUsers(data.data));
+
     }, []);
 
     return (
@@ -54,7 +55,7 @@ export default function Dashboard() {
                         {users.map((user) => (
                             <TableRow key={user.id}>
                                 <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.role}</TableCell>
+                                <TableCell>{user.roles.map((role) => role.name).join(', ')}</TableCell>
                                 <TableCell>
                                     <Button variant="outline">Edit</Button>
                                 </TableCell>
