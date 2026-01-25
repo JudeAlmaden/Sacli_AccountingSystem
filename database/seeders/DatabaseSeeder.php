@@ -18,31 +18,12 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     public function run(): void
-    {
+    {        
         $this->call([
             RolesSeeder::class,
+            UsersSeeder::class,
             ChartOfAccountsSeeder::class,
+            DisbursementSeeder::class,
         ]);
-        
-        //We make a admin role, this is how we will make accounts in the future <3
-        User::truncate();
-        User::factory()->create([
-            'name' => 'admin',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('password'),
-        ])->assignRole('admin');
-
-        //We make a admin role, this is how we will make accounts in the future <3
-        User::factory()->create([
-            'name' => 'accounting head',
-            'email' => 'head@example.com',
-            'password' => Hash::make('password'),
-        ])->assignRole('accounting head');   
-
-        User::factory()->create([
-            'name' => 'accounting assistant',
-            'email' => 'assistant@example.com',
-            'password' => Hash::make('password'),
-        ])->assignRole('accounting assistant');  
     }
 }
