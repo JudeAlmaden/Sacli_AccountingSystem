@@ -22,11 +22,12 @@ const sidebarNavItems: NavItem[] = [
         href: editPassword(),
         icon: null,
     },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
-        icon: null,
-    },
+    // We will be disabled two factor authentication for now
+    // {
+    //     title: 'Two-Factor Auth',
+    //     href: show(),
+    //     icon: null,
+    // },
     {
         title: 'Appearance',
         href: editAppearance(),

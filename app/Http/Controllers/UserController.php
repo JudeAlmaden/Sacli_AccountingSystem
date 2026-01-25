@@ -6,12 +6,39 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Facades\Permission;
-use Spatie\Permission\Facades\Role;
-use Illuminate\Validation\Rule;
+use Spatie\Permission\Facades\Role;       
+use Illuminate\Validation\Rule;                                                                      
 
 class UserController extends Controller
 {
+
+ // For Stat Card
+    function stats()
+    {
+        $totalUsers = User::count();
+        $activeUsers = User::where('status', 'active')->count();
+        $inactiveUsers = User::where('status', 'inactive')->count();
+        $adminUsers = User::role('admin')->count();
+        
+        //Fetch the single user with special roles
+        $accountingHead = User::role('accounting head')->where('status', 'active')->get();
+        $svp = User::role('svp')->where('status', 'active')->get();
+        $auditor = User::role('auditor')->where('status', 'active')->get();
+        
+        $specialUsers = [
+            'accounting_head' => $accountingHead,
+            'svp' => $svp,
+            'auditor' => $auditor,
+        ];
+        return response()->json([
+            'total_users' => $totalUsers,
+            'active_users' => $activeUsers,
+            'inactive_users' => $inactiveUsers,
+            'admin_users' => $adminUsers,
+            'special_users' => $specialUsers,
+        ]);
+    }
+
     /**
      * Display a paginated list of accounts.
      * Supports filtering by search, role, email.
@@ -45,7 +72,7 @@ class UserController extends Controller
             ->when($validated['status'] ?? null, fn ($q, $status) =>
                 $q->where('status', $status)
             )
-            ->paginate($limit);
+            ->paginate(10);
 
         return response()->json($users);
     }
@@ -54,44 +81,71 @@ class UserController extends Controller
      * Store a newly created account in the database.
      * Handles validation and persistence.
      */
+
     function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
-            'role'     => [
-                'required',
-                'string',
-                Rule::exists('roles', 'name')
-                    ->where(fn ($q) => $q->where('guard_name', 'web')),
-            ],
-            'status'   => 'nullable|string|in:active,inactive',
-        ], [
-            'email.unique'       => 'This email is already registered.',
-            'password.confirmed' => 'Password confirmation does not match.',
-        ]);
+    $validated = $request->validate([
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|string|email|max:255|unique:users,email',
+        'password' => 'required|string|min:8|confirmed',
+        'role'     => [
+            'required',
+            'string',
+            Rule::exists('roles', 'name')
+                ->where(fn ($q) => $q->where('guard_name', 'web')),
+            function ($attribute, $value, $fail) {
+                if ($value === 'admin') {
+                    $fail('Cannot create new admin users.');
+                }
+            },
+        ],
+        'status'   => 'nullable|string|in:active,inactive',
+    ], [
+        'email.unique'       => 'This email is already registered.',
+        'password.confirmed' => 'Password confirmation does not match.',
+    ]);
 
-        $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'status'   => $validated['status'] ?? 'active',
-            'password' => Hash::make($validated['password']),
-        ]);
+    // Roles that must be UNIQUE among active users
+    $uniqueRoles = ['admin', 'accounting head', 'svp', 'auditor'];
 
-        // Enforce ONE role only
-        $user->syncRoles([$validated['role']]);
+    if (
+        in_array($validated['role'], $uniqueRoles) &&
+        ($validated['status'] ?? 'active') === 'active'
+    ) {
+        $exists = User::where('status', 'active')
+            ->whereHas('roles', fn ($q) =>
+                $q->where('name', $validated['role'])
+            )
+            ->exists();
 
-        return response()->json([
-            'message' => 'User created successfully.',
-            'data'    => [
-                'id'     => $user->id,
-                'name'   => $user->name,
-                'email'  => $user->email,
-                'status' => $user->status,
-                'role'   => $user->getRoleNames()->first(),
-            ],
-        ], 201);
+        if ($exists) {
+            return response()->json([
+                'message' => "There can only be one active {$validated['role']}.",
+            ], 422);
+        }
+    }
+
+    // Create user AFTER validation checks
+    $user = User::create([
+        'name'     => $validated['name'],
+        'email'    => $validated['email'],
+        'status'   => $validated['status'] ?? 'active',
+        'password' => Hash::make($validated['password']),
+    ]);
+
+    // Enforce ONE role per user
+    $user->syncRoles([$validated['role']]);
+
+    return response()->json([
+        'message' => 'User created successfully.',
+        'data'    => [
+            'id'     => $user->id,
+            'name'   => $user->name,
+            'email'  => $user->email,
+            'status' => $user->status,
+            'role'   => $user->getRoleNames()->first(),
+        ],
+    ], 201);
     }
 
     /**
@@ -109,40 +163,95 @@ class UserController extends Controller
     /**
      * Update an existing account in the database.
      */
+
     function update(Request $request, User $user)
     {
         $validated = $request->validate([
+            'id' => 'required|exists:users,id',
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|max:255|unique:users,email,' . $user->id,
+            'email'    => 'required|email|max:255',
             'password' => 'nullable|string|min:8|confirmed',
             'status'   => 'nullable|string|in:active,inactive',
             'role'     => [
                 'required',
                 'string',
-                Rule::exists('roles', 'name')->where(fn ($q) =>
-                    $q->where('guard_name', 'web')
-                ),
+                Rule::exists('roles', 'name')
+                    ->where(fn ($q) => $q->where('guard_name', 'web')),
+                function ($attribute, $value, $fail) use ($user) {
+                    if ($value === 'admin' && $user->id !== auth()->id()) {
+                        $fail('Cannot assign admin role to other users.');
+                    }
+                },
             ],
         ]);
 
-        $user->update([
+
+        //Get the User
+        $user = User::find($validated['id']);
+
+        // Roles that must be unique among ACTIVE users
+        $uniqueRoles = ['accounting head', 'admin', 'svp', 'auditor'];
+        if (in_array($validated['role'], $uniqueRoles)) {
+            $exists = User::where('status', 'active')
+                ->where('id', '!=', $user->id) // exclude current user
+                ->whereHas('roles', fn ($q) =>
+                    $q->where('name', $validated['role'])
+                )
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [
+                        'role' => [
+                            "There can only be one active {$validated['role']}."
+                        ],
+                    ],
+                ],422);
+            }
+        }
+
+        // Prevent admin from changing their own role or status (Self-Demotion Protection)
+        if ($user->id === auth()->id()) {
+            unset($validated['role']);
+            unset($validated['status']);
+        }
+
+        // Update basic info
+        $updateData = [
             'name'   => $validated['name'],
             'email'  => $validated['email'],
-            'status' => $validated['status'] ?? 'active',
-        ]);
+        ];
 
+        // Only update status if it was not unset (i.e., not self)
+        if (isset($validated['status'])) {
+            $updateData['status'] = $validated['status'];
+        }
+
+        $user->update($updateData);
+            
+
+        // Update password if provided
         if (!empty($validated['password'])) {
             $user->update([
                 'password' => Hash::make($validated['password']),
             ]);
         }
 
-        // Change role safely
-        $user->syncRoles([$validated['role']]);
+        // Enforce ONE role only (Skip if self/admin, to preserve role)
+        if (isset($validated['role'])) {
+            $user->syncRoles([$validated['role']]);
+        }
 
         return response()->json([
             'message' => 'User updated successfully.',
-            'data'    => $user->load('roles'),
+            'data'    => [
+                'id'     => $user->id,
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'status' => $user->status,
+                'roles'  => $user->getRoleNames(),
+            ],
         ]);
     }
 }

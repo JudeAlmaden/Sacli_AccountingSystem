@@ -1,69 +1,370 @@
-import AppLayout from '@/layouts/app-layout';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { useEffect, useState } from 'react';
-import type { User } from '@/types/database';
 import { route } from 'ziggy-js';
+import { dashboard } from '@/routes';
+import { Head, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import AppLayout from '@/layouts/app-layout';
+import type { User } from '@/types/database';
+import type { BreadcrumbItem } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from "@/components/ui/input";
+import { Shield, Briefcase, FileText } from 'lucide-react';
+import { SpecialUserCard } from './components/special-user-card';
+import { UserFormModal } from './components/user-form-modal';
+import { UserStats } from './components/user-stats';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
         href: dashboard().url,
     },
+    {
+        title: 'User Management',
+        href: route('users.index'),
+    }
 ];
 
-export default function Dashboard() {
+export default function Users() {
+    //This current user
+    const { user } = usePage().props as any;
+
     //Get the CSRF token from the meta tag
     const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
     const token = meta?.content || '';
 
     //Get the accounts from the API
     const [users, setUsers] = useState<User[]>([]);
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        next_page_url: null as string | null,
+        prev_page_url: null as string | null,
+        total: 0,
+        from: 0,
+        to: 0,
+    });
+    const [stats, setStats] = useState({
+        total_users: 0,
+        active_users: 0,
+        inactive_users: 0,
+        admin_users: 0,
+    });
 
+    //Special Users States
+    const [specialUsers, setSpecialUsers] = useState<{
+        accounting_head: User[];
+        svp: User[];
+        auditor: User[];
+    }>({
+        accounting_head: [],
+        svp: [],
+        auditor: [],
+    });
+
+    // Search and Loading State
+    const [search, setSearch] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Modal State
+    const [isAppModalOpen, setAppModalOpen] = useState(false); // Renamed to avoid confusion with potential other modals
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+    //User Form State and data
+    const [userForm, setUserForm] = useState({
+        id: -1,
+        name: '',
+        email: '',
+        role: '',
+        status: 'active',
+        password: '',
+        password_confirmation: '',
+    });
+    const [formErrors, setFormErrors] = useState<any>({});
+
+    const fetchUsers = (url?: string | null) => {
+        setIsLoading(true);
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': token,
+        };
+
+        const targetUrl = new URL(url || route('users.index'));
+        if (searchQuery) {
+            targetUrl.searchParams.set('search', searchQuery);
+        }
+
+        Promise.all([
+            fetch(targetUrl.toString(), { headers }).then(res => res.json()),
+            fetch(route('users.stats'), { headers }).then(res => res.json())
+        ]).then(([usersData, statsData]) => {
+            // Handle Paginated Response
+            setUsers(usersData.data || []);
+            setPagination({
+                current_page: usersData.current_page,
+                last_page: usersData.last_page,
+                next_page_url: usersData.next_page_url,
+                prev_page_url: usersData.prev_page_url,
+                total: usersData.total,
+                from: usersData.from,
+                to: usersData.to,
+            });
+
+            // Handle Stats & Special Users
+            setStats(statsData);
+            setSpecialUsers({
+                accounting_head: statsData.special_users.accounting_head || [],
+                svp: statsData.special_users.svp || [],
+                auditor: statsData.special_users.auditor || [],
+            });
+            setIsLoading(false);
+        }).catch(error => {
+            console.error('Failed to fetch data:', error);
+            setIsLoading(false);
+        });
+    };
+
+    // Debounce Search
     useEffect(() => {
-        fetch(route('users.index'), {
-            method: 'GET',
+        const timeoutId = setTimeout(() => {
+            setSearchQuery(search);
+        }, 500);
+        return () => clearTimeout(timeoutId);
+    }, [search]);
+
+    // Fetch on Search or initial load
+    useEffect(() => {
+        fetchUsers();
+    }, [searchQuery, token]);
+
+
+    const openCreateModal = () => {
+        setIsEditing(false);
+        setCurrentUserId(null);
+        setUserForm({
+            id: -1,
+            name: '',
+            email: '',
+            role: '',
+            status: 'active',
+            password: '',
+            password_confirmation: '',
+        });
+        setFormErrors({});
+        setAppModalOpen(true);
+    };
+
+    const openEditModal = (user: User) => {
+        setIsEditing(true);
+        setCurrentUserId(user.id);
+        const userRole = user.roles && user.roles.length > 0 ? user.roles[0].name : '';
+        setUserForm({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: userRole,
+            status: user.status,
+            password: '',
+            password_confirmation: '',
+        });
+        setFormErrors({});
+        setAppModalOpen(true);
+    };
+
+    const handleSaveUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        setFormErrors({});
+
+        //Url changes for update and store
+        const url = isEditing && currentUserId
+            ? route('users.update', currentUserId)
+            : route('users.store');
+
+        //Method changes for update and store
+        const method = isEditing ? 'PUT' : 'POST';
+
+        //Fetch for update and store
+        fetch(url, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': token,
             },
-        }).then(res => res.json())
-            .then(data => setUsers(data.data));
+            body: JSON.stringify(userForm),
+        })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) {
+                    if (res.status === 422) {
+                        setFormErrors(data.errors || {});
+                    } else {
+                        alert(data.message || 'An error occurred.');
+                    }
+                    throw new Error('Validation failed');
+                }
+                console.log(data);
+                return data;
+            })
+            .then(() => {
+                setAppModalOpen(false);
+                fetchUsers();
+            })
+            .catch(err => console.error(err))
+            .finally(() => setIsSaving(false));
+    };
 
-    }, []);
 
+    //UI Element
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Accounts" />
-            <div className="flex flex-col gap-4 p-16">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">Users</h2>
-                    <Button variant="outline">Add User</Button>
+            <Head title="Users & Accounts" />
+            <div className="flex flex-col gap-6 py-6">
+
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-3xl font-bold">Users and Accounts</h1>
+                    <p className="text-muted-foreground">Manage user accounts, roles, and permissions here</p>
                 </div>
-                <Table className="w-full">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {users.map((user) => (
-                            <TableRow key={user.id}>
-                                <TableCell>{user.name}</TableCell>
-                                <TableCell>{user.roles.map((role) => role.name).join(', ')}</TableCell>
-                                <TableCell>
-                                    <Button variant="outline">Edit</Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+
+
+                <UserStats stats={stats} />
+
+                <div>
+                    <h2 className="text-2xl font-bold">Special Users</h2>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-3">
+                    <SpecialUserCard
+                        title="Accounting Head"
+                        icon={Briefcase}
+                        users={specialUsers.accounting_head}
+                        onEdit={openEditModal}
+                        onAssign={() => openCreateModal()}
+                    />
+                    <SpecialUserCard
+                        title="SVP"
+                        icon={Shield}
+                        users={specialUsers.svp}
+                        onEdit={openEditModal}
+                        onAssign={() => openCreateModal()}
+                    />
+                    <SpecialUserCard
+                        title="Auditor"
+                        icon={FileText}
+                        users={specialUsers.auditor}
+                        onEdit={openEditModal}
+                        onAssign={() => openCreateModal()}
+                    />
+                </div>
+
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-2xl font-bold">User Accounts</h2>
+                        <Button onClick={openCreateModal}>Add User</Button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <Input
+                            placeholder="Search users..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="max-w-sm"
+                        />
+                    </div>
+
+                    <Card>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {users.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                                {isLoading ? 'Loading...' : 'No users found.'}
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        users.map((user) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="font-medium">{user.name}</TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700">
+                                                        {user.roles?.map((role) => role.name).join(', ') || 'No role'}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.status === 'active'
+                                                        ? 'bg-green-50 text-green-700'
+                                                        : 'bg-red-50 text-red-700'
+                                                        }`}>
+                                                        {user.status}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Button variant="outline" size="sm" onClick={() => openEditModal(user)}>Edit</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+
+                    {/* Pagination Controls */}
+                    <div className="flex items-center justify-between space-x-2 py-4">
+                        <div className="text-sm text-muted-foreground">
+                            Showing {pagination.from} to {pagination.to} of {pagination.total} entries
+                        </div>
+                        <div className="space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => fetchUsers(pagination.prev_page_url)}
+                                disabled={!pagination.prev_page_url}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => fetchUsers(pagination.next_page_url)}
+                                disabled={!pagination.next_page_url}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* User Modal */}
+                <UserFormModal
+                    isOpen={isAppModalOpen}
+                    onOpenChange={setAppModalOpen}
+                    isEditing={isEditing}
+                    isSaving={isSaving}
+                    currentUserId={currentUserId}
+                    currentUser={user}
+                    userForm={userForm}
+                    formErrors={formErrors}
+                    onSubmit={handleSaveUser}
+                    onFormChange={(field, value) => setUserForm({ ...userForm, [field]: value })}
+                />
+
             </div>
         </AppLayout>
     );
