@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Facades\Permission;
 use Spatie\Permission\Facades\Role;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
