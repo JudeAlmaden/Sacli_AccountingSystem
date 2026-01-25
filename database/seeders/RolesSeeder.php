@@ -44,14 +44,6 @@ class RolesSeeder extends Seeder
         Permission::create(['name' => 'delete accounts']);
         Permission::create(['name' => 'view accounts']);
 
-        //Assign permissions to roles
-        $admin->givePermissionTo([
-            'create accounts',
-            'update accounts',
-            'delete accounts',
-            'view accounts',
-        ]);
-
 
         //Roles are just labels, we can assign permissions to roles
         //We can also permissions directly to users
