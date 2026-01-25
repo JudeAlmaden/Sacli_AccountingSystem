@@ -28,9 +28,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('admin/users');
     })->name('users');
 
+    //Unique to accounting head
     Route::get('/dashboard/chart-of-accounts',function(){
         return Inertia::render('accounting-head/accounts');
     })->name('accounts');
+
+    Route::get('/dashboard/disbursements', function(){
+        return Inertia::render('disbursement/index');
+    })->name('disbursements');
 });
 
 
