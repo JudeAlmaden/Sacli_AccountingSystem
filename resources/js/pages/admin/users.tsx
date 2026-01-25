@@ -13,6 +13,7 @@ import { Shield, Briefcase, FileText } from 'lucide-react';
 import { SpecialUserCard } from './components/special-user-card';
 import { UserFormModal } from './components/user-form-modal';
 import { UserStats } from './components/user-stats';
+import { describe } from 'node:test';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -224,18 +225,19 @@ export default function Users() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Users & Accounts" />
-            <div className="flex flex-col gap-6 py-6">
+            <div className="flex flex-col gap-6">
 
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-3xl font-bold">Users and Accounts</h1>
+                    <h1 className="text-3xl text-header">Users and Accounts</h1>
                     <p className="text-muted-foreground">Manage user accounts, roles, and permissions here</p>
                 </div>
 
 
                 <UserStats stats={stats} />
 
-                <div>
-                    <h2 className="text-2xl font-bold">Special Users</h2>
+                <div className="flex flex-col gap-1 py-2">
+                    <h2 className="text-2xl text-header">Special Users</h2>
+                    <p className="text-sm text-[#737385]">Users with special roles and permissions</p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-3">
@@ -262,19 +264,22 @@ export default function Users() {
                     />
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 py-2">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold">User Accounts</h2>
-                        <Button onClick={openCreateModal}>Add User</Button>
+                        <div className="flex flex-col gap-1">
+                            <h2 className="text-2xl text-header">User Accounts</h2>
+                            <p className="text-sm text-[#737385]">View and manage all registered users</p>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex justify-between items-center gap-4">
                         <Input
                             placeholder="Search users..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="max-w-sm"
                         />
+                        <Button onClick={openCreateModal} variant="default" >Add User</Button>
                     </div>
 
                     <Card>
@@ -307,11 +312,9 @@ export default function Users() {
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${user.status === 'active'
-                                                        ? 'bg-green-50 text-green-700'
-                                                        : 'bg-red-50 text-red-700'
-                                                        }`}>
-                                                        {user.status}
+                                                    <span className="inline-flex items-center gap-2 text-xs font-medium">
+                                                        <span className={user.status === 'active' ? 'status-dot-active' : 'status-dot-inactive'}></span>
+                                                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                                                     </span>
                                                 </TableCell>
                                                 <TableCell>

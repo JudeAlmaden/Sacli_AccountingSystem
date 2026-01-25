@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from 'react';
 import type { Account } from '@/types/database';
 import { route } from 'ziggy-js';
+import { Badge } from '@/components/ui/badge';
+
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -183,10 +185,10 @@ export default function ChartOfAccounts() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Chart of Accounts" />
-            <div className="flex flex-col gap-6 p-8">
+            <div className="flex flex-col gap-6">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Chart of Accounts</h2>
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-3xl text-header">Chart of Accounts</h2>
                         <p className="text-muted-foreground">Manage your financial accounts and structure.</p>
                     </div>
                 </div>
@@ -292,7 +294,11 @@ export default function ChartOfAccounts() {
                                         <TableCell>{account.account_name}</TableCell>
                                         <TableCell>{account.account_type}</TableCell>
                                         <TableCell className="text-muted-foreground">{account.account_description || '-'}</TableCell>
-                                        <TableCell className="text-muted-foreground">{account.status}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
+                                                {account.status}
+                                            </Badge>
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 variant="destructive"

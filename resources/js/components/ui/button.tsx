@@ -10,14 +10,14 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+          "bg-[#18cf2f] text-white shadow-xs hover:bg-[#00db33] shadow-[inset_0_-4px_0_rgba(15,166,23,0.3)] border-2 border-[#0c9d1f]",
         destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+          "bg-[#ff2727] text-white shadow-xs hover:bg-[#e61e1e] shadow-[inset_0_-4px_0_rgba(204,20,20,0.3)] border-2 border-[#cc1414] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         outline:
-          "border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground",
+          "border-2 border-[#d0d0d0] bg-transparent text-foreground shadow-xs hover:bg-accent hover:text-accent-foreground shadow-[inset_0_-4px_0_rgba(150,150,150,0.1)]",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80 shadow-[inset_0_-3px_0_rgba(0,0,0,0.3)]",
+        ghost: "border-2 border-[#e6e6e6] hover:bg-accent hover:text-accent-foreground shadow-[inset_0_-5px_0_rgba(0,0,0,0.2]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

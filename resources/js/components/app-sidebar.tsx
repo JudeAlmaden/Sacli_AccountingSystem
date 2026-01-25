@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, User, FileText, ShieldCheck } from 'lucide-react';
+import { LayoutGrid, User, FileText, WalletCards, BookOpen } from 'lucide-react';
 import AppLogo from './app-logo';
 import type { SharedData } from '@/types';
 import { route } from 'ziggy-js';
@@ -33,9 +33,9 @@ export function AppSidebar() {
 
     const navItemDetails: Record<string, NavItem> = {
         dashboard: { title: 'Dashboard', href: route('dashboard'), icon: LayoutGrid },
-        users: { title: 'Users and Accounts (ADMIN)', href: route('users'), icon: User },
-        disbursements: { title: 'Disbursements(All)', href: route('disbursements'), icon: FileText },
-        chartAccounts: { title: 'Chart of Accounts (HEAD)', href: route('accounts'), icon: FileText },
+        users: { title: 'Users and Accounts', href: route('users'), icon: User },
+        disbursements: { title: 'Disbursement', href: route('disbursements'), icon: WalletCards },
+        chartAccounts: { title: 'Chart of Accounts', href: route('accounts'), icon: BookOpen },
     };
 
     const navItems = user?.roles
