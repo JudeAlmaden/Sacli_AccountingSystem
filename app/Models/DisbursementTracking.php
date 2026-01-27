@@ -10,6 +10,8 @@ class DisbursementTracking extends Model
 {
     use HasFactory;
 
+    protected $table = 'disbursement_tracking';
+
     protected $fillable = [
         'disbursement_id',
         'handled_by',
