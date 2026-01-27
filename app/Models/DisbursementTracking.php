@@ -15,6 +15,7 @@ class DisbursementTracking extends Model
     protected $fillable = [
         'disbursement_id',
         'handled_by',
+        'step',
         'role',
         'action',
         'remarks',

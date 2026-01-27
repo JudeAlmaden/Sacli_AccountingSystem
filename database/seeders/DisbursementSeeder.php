@@ -43,6 +43,8 @@ class DisbursementSeeder extends Seeder
             'control_number' => 'DV-2026-001',
             'title' => 'Office Rent Payment - January 2026',
             'description' => 'Monthly office rent payment for the main office building',
+            'step' => 4,
+            'status' => 'approved',
         ]);
 
         DisbursementItem::create([
@@ -63,7 +65,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement1->id,
             'handled_by' => $assistant->id,
-            'role' => 'accounting_assistant',
+            'step' => 1,
+            'role' => 'accounting assistant',
             'action' => 'approved',
             'remarks' => 'Verified supporting documents. All in order.',
             'acted_at' => Carbon::now()->subDays(5),
@@ -72,7 +75,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement1->id,
             'handled_by' => $head->id,
-            'role' => 'head',
+            'step' => 2,
+            'role' => 'accounting head',
             'action' => 'approved',
             'remarks' => 'Approved for payment.',
             'acted_at' => Carbon::now()->subDays(4),
@@ -81,6 +85,7 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement1->id,
             'handled_by' => $admin->id,
+            'step' => 3,
             'role' => 'auditor',
             'action' => 'approved',
             'remarks' => 'Audit complete. No issues found.',
@@ -90,6 +95,7 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement1->id,
             'handled_by' => $admin->id,
+            'step' => 4,
             'role' => 'svp',
             'action' => 'approved',
             'remarks' => 'Final approval granted.',
@@ -101,6 +107,8 @@ class DisbursementSeeder extends Seeder
             'control_number' => 'DV-2026-002',
             'title' => 'Supplier Payment - ABC Corp',
             'description' => 'Payment for office supplies and equipment',
+            'step' => 2,
+            'status' => 'pending',
         ]);
 
         DisbursementItem::create([
@@ -121,7 +129,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement2->id,
             'handled_by' => $assistant->id,
-            'role' => 'accounting_assistant',
+            'step' => 1,
+            'role' => 'accounting assistant',
             'action' => 'approved',
             'remarks' => 'Documents verified and complete.',
             'acted_at' => Carbon::now()->subDays(2),
@@ -130,7 +139,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement2->id,
             'handled_by' => null,
-            'role' => 'head',
+            'step' => 2,
+            'role' => 'accounting head',
             'action' => 'pending',
             'remarks' => null,
             'acted_at' => null,
@@ -141,6 +151,8 @@ class DisbursementSeeder extends Seeder
             'control_number' => 'DV-2026-003',
             'title' => 'Utility Bills Payment',
             'description' => 'Electricity and water bills for January 2026',
+            'step' => 1,
+            'status' => 'pending',
         ]);
 
         DisbursementItem::create([
@@ -161,7 +173,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement3->id,
             'handled_by' => null,
-            'role' => 'accounting_assistant',
+            'step' => 1,
+            'role' => 'accounting assistant',
             'action' => 'pending',
             'remarks' => null,
             'acted_at' => null,
@@ -172,6 +185,8 @@ class DisbursementSeeder extends Seeder
             'control_number' => 'DV-2026-004',
             'title' => 'Equipment Purchase',
             'description' => 'New computer equipment for accounting department',
+            'step' => 3,
+            'status' => 'rejected',
         ]);
 
         DisbursementItem::create([
@@ -192,7 +207,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement4->id,
             'handled_by' => $assistant->id,
-            'role' => 'accounting_assistant',
+            'step' => 1,
+            'role' => 'accounting assistant',
             'action' => 'approved',
             'remarks' => 'All documents attached.',
             'acted_at' => Carbon::now()->subDays(3),
@@ -201,7 +217,8 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement4->id,
             'handled_by' => $head->id,
-            'role' => 'head',
+            'step' => 2,
+            'role' => 'accounting head',
             'action' => 'approved',
             'remarks' => 'Budget allocation confirmed.',
             'acted_at' => Carbon::now()->subDays(2),
@@ -210,6 +227,7 @@ class DisbursementSeeder extends Seeder
         DisbursementTracking::create([
             'disbursement_id' => $disbursement4->id,
             'handled_by' => $admin->id,
+            'step' => 3,
             'role' => 'auditor',
             'action' => 'rejected',
             'remarks' => 'Missing purchase order. Please resubmit with complete documentation.',

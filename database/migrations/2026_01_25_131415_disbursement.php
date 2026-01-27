@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('control_number');
             $table->string('title');
             $table->string('description');
+            $table->integer('step')->default(1); // 1=assistant, 2=head, 3=auditor, 4=svp
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
         });
 
@@ -33,7 +35,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('disbursement_id')->constrained('disbursements')->cascadeOnDelete();
             $table->foreignId('handled_by')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->enum('role', ['accounting_assistant', 'head', 'auditor', 'svp']);
+            $table->integer('step'); // 1=assistant, 2=head, 3=auditor, 4=svp
+            $table->enum('role', ['accounting assistant', 'accounting head', 'auditor', 'svp']);
             $table->enum('action', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('remarks')->nullable();
             $table->timestamp('acted_at')->nullable();

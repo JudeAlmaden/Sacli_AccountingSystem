@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AccountsController;
+use App\Http\Controllers\DisbursementController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -32,4 +33,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/accounts', [AccountsController::class, 'index'])->name('accounts.index'); // List all accounts
     Route::post('/accounts', [AccountsController::class, 'store'])->name('accounts.store');      // Save new account
      Route::delete('/accounts/{account}', [AccountsController::class, 'destroy'])->name('accounts.destroy');   // Delete account
+});
+
+/*==================
+  Disbursement API Routes
+===================*/
+//For creating and deleting disbursement entries
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Disbursement Management
+    Route::get('/disbursements', [DisbursementController::class, 'index'])->name('disbursements.index'); // List all disbursements
+    Route::post('/disbursements', [DisbursementController::class, 'store'])->name('disbursements.store');      // Save new disbursement
+     Route::delete('/disbursements/{disbursement}', [DisbursementController::class, 'destroy'])->name('disbursements.destroy');   // Delete disbursement
 });

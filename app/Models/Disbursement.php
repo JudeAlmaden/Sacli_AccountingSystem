@@ -14,6 +14,8 @@ class Disbursement extends Model
         'control_number',
         'title',
         'description',
+        'step',
+        'status',
     ];
 
     /**
