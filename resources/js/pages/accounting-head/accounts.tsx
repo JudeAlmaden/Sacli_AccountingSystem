@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect, useState } from 'react';
 import type { Account } from '@/types/database';
 import { route } from 'ziggy-js';
@@ -251,13 +252,22 @@ export default function ChartOfAccounts() {
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="account_normal_side">Normal Side</Label>
-                                    <Input
-                                        id="account_normal_side"
+                                    <Select
                                         value={createForm.account_normal_side}
-                                        onChange={e => setCreateForm({ ...createForm, account_normal_side: e.target.value })}
-                                        placeholder="e.g. Debit"
-                                        required
-                                    />
+                                        onValueChange={(value) =>
+                                            setCreateForm({ ...createForm, account_normal_side: value })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="e.g. Debit" />
+                                        </SelectTrigger>
+
+                                        <SelectContent>
+                                            <SelectItem value="debit">Debit</SelectItem>
+                                            <SelectItem value="credit">Credit</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
                                     {createErrors.account_normal_side && <p className="text-red-500 text-sm">{createErrors.account_normal_side[0]}</p>}
                                 </div>
                                 <div className="grid gap-2">

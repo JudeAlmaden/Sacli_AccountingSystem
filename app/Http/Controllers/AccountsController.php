@@ -41,6 +41,7 @@ class AccountsController extends Controller
             'account_description' => 'nullable|string',
             'account_code' => 'required|string|max:255|unique:accounts,account_code',
             'account_type' => 'required|string|max:255',
+            'account_normal_side' => 'required|string|max:255',
         ]);
 
         $account = Account::create($validated);
