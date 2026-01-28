@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronDown, Plus, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -98,8 +98,8 @@ export default function AccountingEntryTable({
         };
     }, [title, date, description, rows]);
 
-    // Notify parent component when data changes
-    useMemo(() => {
+    // Notify parent component when data changes (using useEffect instead of useMemo)
+    useEffect(() => {
         if (onDataChange) {
             onDataChange(preparedData);
         }
