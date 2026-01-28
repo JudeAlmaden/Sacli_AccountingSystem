@@ -92,6 +92,7 @@ export default function ChartOfAccounts() {
                     from: data.from,
                     to: data.to,
                 });
+                console.log(data);
                 setIsLoading(false);
             })
             .catch(err => {
