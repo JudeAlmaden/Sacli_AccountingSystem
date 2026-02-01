@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import type { BreadcrumbItem } from '@/types';
 import AccountingEntryTable from '@/components/accounting-entry-table';
+import { DisbursementAttachment } from './components/DisbursementAttachment';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -22,14 +23,67 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function GenerateDisbursement() {
+    const today = new Date().toISOString().split('T')[0];
     const [title, setTitle] = useState('');
-    const [date, setDate] = useState('');
+    const [date, setDate] = useState(today);
     const [description, setDescription] = useState('');
     const [disbursementData, setDisbursementData] = useState<any>(null);
+    const [attachments, setAttachments] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string[]>>({});
+
+    // Get CSRF token
+    const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+    const token = meta?.content || '';
 
     const handleSave = () => {
-        console.log('Saving disbursement:', disbursementData);
-        // TODO: Add mo malupetang route mo dito IDOL
+        if (!disbursementData) return;
+        setIsSubmitting(true);
+        setErrors({});
+
+        const formData = new FormData();
+
+        // Append basic info
+        formData.append('title', disbursementData.title);
+        formData.append('date', disbursementData.date);
+        formData.append('description', disbursementData.description);
+
+        // Append accounting entries
+        formData.append('accounts', JSON.stringify(disbursementData.accounts));
+
+        // Append temp IDs of uploaded files
+        attachments.forEach((tempId) => {
+            formData.append('attachments[]', tempId);
+        });
+
+        fetch(route('disbursements.store'), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            },
+            body: formData,
+        })
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) {
+                    if (response.status === 422) {
+                        setErrors(data.errors || {});
+                        throw new Error('Validation failed');
+                    }
+                    throw new Error(data.message || 'Something went wrong');
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.id) {
+                    router.visit(route('disbursement.view', { id: data.id }));
+                }
+            })
+            .catch(error => {
+                console.error('Error saving disbursement:', error);
+                setIsSubmitting(false);
+            });
     };
 
     const handleCancel = () => {
@@ -51,93 +105,13 @@ export default function GenerateDisbursement() {
                     onDataChange={setDisbursementData}
                     onSave={handleSave}
                     onCancel={handleCancel}
-                    saveButtonText="Save Disbursement"
+                    saveButtonText={isSubmitting ? "Saving..." : "Save Disbursement"}
+                    isLoading={isSubmitting}
+                    errors={errors}
                 />
-   
+
                 <div className="space-y-6">
-                    <Card className="border-border bg-card p-6 h-[200px] flex flex-col">
-                        <div className="mb-4">
-                            <h3 className="text-sm font-semibold text-foreground">Attachments</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Upload supporting documents</p>
-                        </div>
-                        <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-accent transition-colors cursor-pointer mb-4">
-                            <input
-                                type="file"
-                                multiple
-                                className="hidden"
-                                id="file-upload"
-                            />
-                            <label htmlFor="file-upload" className="cursor-pointer">
-                                <div className="flex flex-col items-center gap-1">
-                                    <p className="text-sm font-medium text-foreground">Upload Files</p>
-                                    <p className="text-xs text-muted-foreground">Click to browse</p>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto"></div>
-                    </Card>
-          
-                    <Card className="border-border bg-card p-6">
-                        <div className="mb-6">
-                            <h3 className="text-sm font-semibold text-foreground">Status Tracking</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Approval workflow progress</p>
-                        </div>
-                        <div className="relative">                        
-                            <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border"></div>
-
-                            <div className="space-y-6">                          
-                                <div className="flex items-center gap-4 relative">
-                                    <div className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500 z-10">
-                                        <div className="absolute inset-0 rounded-full bg-green-500 opacity-75 animate-[ping_2s_ease-in-out_infinite]"></div>
-                                        <svg
-                                            className="relative h-3 w-3 text-white"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                            strokeWidth={3}
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-foreground">Accounting Assistant</p>
-                                        <p className="text-xs text-muted-foreground">Pending approval</p>
-                                    </div>
-                                </div>
-      
-                                <div className="flex items-center gap-4 relative">
-                                    <div className="relative flex h-6 w-6 shrink-0 items-center justify-center z-10">
-                                        <div className="h-2 w-2 rounded-full bg-gray-400"></div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Accounting Head</p>
-                                        <p className="text-xs text-muted-foreground">Awaiting</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 relative">
-                                    <div className="relative flex h-6 w-6 shrink-0 items-center justify-center z-10">
-                                        <div className="h-2 w-2 rounded-full bg-gray-400"></div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">Auditor</p>
-                                        <p className="text-xs text-muted-foreground">Awaiting</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 relative">
-                                    <div className="relative flex h-6 w-6 shrink-0 items-center justify-center z-10">
-                                        <div className="h-2 w-2 rounded-full bg-gray-400"></div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-muted-foreground">SVP</p>
-                                        <p className="text-xs text-muted-foreground">Awaiting</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
+                    <DisbursementAttachment onFilesChange={setAttachments} />
                 </div>
             </div>
         </AppLayout>

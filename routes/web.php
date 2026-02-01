@@ -46,15 +46,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('disbursement/view', ['id' => $id]);
     })->name('disbursement.view');
 
-    Route::get('dashboard/disbursements/inbox', function(){
-        return Inertia::render('disbursement/inbox');
-    });
-
-    Route::get('dashboard/disbursements/inbox/{id}', function($id){
-        return('inbox.view');
+    //Inbox
+    Route::get('dashboard/inbox', function(){
+        return Inertia::render('inbox');
     });
 });
 
 
 
 require __DIR__.'/settings.php';
+//Made by ai, if it works it works
+Route::get('/attachments/download/{id}', [App\Http\Controllers\FileController::class, 'download'])->name('attachments.download');
+
+Route::get('/attachments/download/{id}', 'App\Http\Controllers\FileController@download')->name('attachments.download');
+
+Route::post('/attachments/upload-temp', [App\Http\Controllers\TemporaryUploadController::class, 'upload'])->name('attachments.upload-temp');
+Route::delete('/attachments/revert-temp', [App\Http\Controllers\TemporaryUploadController::class, 'revert'])->name('attachments.revert-temp');
+
+Route::post('/disbursements/{id}/approve', [App\Http\Controllers\DisbursementController::class, 'approve'])->name('disbursements.approve');
+Route::post('/disbursements/{id}/decline', [App\Http\Controllers\DisbursementController::class, 'decline'])->name('disbursements.decline');

@@ -16,6 +16,37 @@ export interface Account {
     status: string;
 }
 
+export interface DisbursementItem {
+    id: number;
+    disbursement_id: number;
+    account_id: number;
+    type: 'debit' | 'credit';
+    amount: number;
+    order_number: number;
+    account?: Account;
+}
+
+export interface DisbursementTracking {
+    id: number;
+    disbursement_id: number;
+    handled_by: number | null;
+    step: number;
+    role: 'accounting assistant' | 'accounting head' | 'auditor' | 'svp';
+    action: 'pending' | 'approved' | 'rejected';
+    remarks: string | null;
+    acted_at: string | null;
+    handler?: User;
+}
+
+export interface DisbursementAttachment {
+    id: number;
+    disbursement_id: number;
+    file_path: string;
+    file_name: string;
+    file_type: string;
+    created_at?: string;
+}
+
 //Used in view
 export interface Disbursement {
     id: number;
@@ -23,10 +54,13 @@ export interface Disbursement {
     title?: string;
     description?: string;
     status?: string;
+    step?: number;
     created_at?: string;
     updated_at?: string;
     total_amount?: number;
-    items?: Account[];
+    items?: DisbursementItem[];
+    tracking?: DisbursementTracking[];
+    attachments?: DisbursementAttachment[];
 }
 
 export interface Role {

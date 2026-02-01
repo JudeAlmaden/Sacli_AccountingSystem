@@ -13,6 +13,7 @@ class DisbursementItem extends Model
     protected $fillable = [
         'disbursement_id',
         'account_id',
+        'type',
         'amount',
         'order_number',
     ];
