@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, User, FileText, WalletCards, BookOpen } from 'lucide-react';
+import { LayoutGrid, User, FileText, WalletCards, BookOpen, Bell } from 'lucide-react';
 import AppLogo from './app-logo';
 import type { SharedData } from '@/types';
 import { route } from 'ziggy-js';
@@ -24,11 +24,11 @@ export function AppSidebar() {
     NAV CONFIG PER ROLE
     ====================== */
     const navItemsByRole: Record<string, string[]> = {
-        'admin': ['dashboard', 'users', 'chartAccounts', 'disbursements'],
-        'accounting assistant': ['dashboard', 'disbursements'],
-        'accounting head': ['dashboard', 'chartAccounts', 'disbursements'],
-        'auditor': ['dashboard', 'disbursements'],
-        'SVP': ['dashboard', 'disbursements'],
+        'admin': ['dashboard', 'users', 'chartAccounts', 'disbursements', 'notifications'],
+        'accounting assistant': ['dashboard', 'disbursements', 'notifications'],
+        'accounting head': ['dashboard', 'chartAccounts', 'disbursements', 'notifications'],
+        'auditor': ['dashboard', 'disbursements', 'notifications'],
+        'SVP': ['dashboard', 'disbursements', 'notifications'],
     };
 
     const navItemDetails: Record<string, NavItem> = {
@@ -36,6 +36,7 @@ export function AppSidebar() {
         users: { title: 'Users and Accounts', href: route('users'), icon: User },
         disbursements: { title: 'Disbursement', href: route('disbursements'), icon: WalletCards },
         chartAccounts: { title: 'Chart of Accounts', href: route('accounts'), icon: BookOpen },
+        notifications: { title: 'Notifications', href: route('inbox'), icon: Bell },
     };
 
     const navItems = user?.roles

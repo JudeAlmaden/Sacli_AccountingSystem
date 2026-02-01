@@ -14,6 +14,7 @@ export interface Account {
     account_type: string;
     account_normal_side: string;
     status: string;
+    disbursement_items_count?: number;
 }
 
 export interface DisbursementItem {

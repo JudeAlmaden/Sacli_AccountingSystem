@@ -12,25 +12,34 @@ interface Account {
 interface AccountSearchDropdownProps {
     onSelect: (account: Account) => void;
     onClose: () => void;
+    accounts?: Account[];
 }
 
 export default function AccountSearchDropdown({
     onSelect,
     onClose,
+    accounts: initialAccounts,
 }: AccountSearchDropdownProps) {
     const inputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [accounts, setAccounts] = useState<Account[]>(initialAccounts || []);
+    const [filteredAccounts, setFilteredAccounts] = useState<Account[]>(initialAccounts || []);
+    const [isLoading, setIsLoading] = useState(!initialAccounts);
 
     const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
     const token = meta?.content || '';
 
     useEffect(() => {
         inputRef.current?.focus();
-        
+
+        if (initialAccounts) {
+            setAccounts(initialAccounts);
+            setFilteredAccounts(initialAccounts);
+            setIsLoading(false);
+            return;
+        }
+
         fetch(route('accounts.index'), {
             headers: {
                 'Content-Type': 'application/json',
@@ -40,15 +49,16 @@ export default function AccountSearchDropdown({
         })
             .then(res => res.json())
             .then(data => {
-                setAccounts(data.data || []);
-                setFilteredAccounts(data.data || []);
+                const accountsData = data.data || [];
+                setAccounts(accountsData);
+                setFilteredAccounts(accountsData);
                 setIsLoading(false);
             })
             .catch(err => {
                 console.error('Failed to fetch accounts', err);
                 setIsLoading(false);
             });
-    }, []);
+    }, [initialAccounts, token]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

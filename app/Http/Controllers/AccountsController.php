@@ -14,9 +14,10 @@ class AccountsController extends Controller
         $validated = $request->validate([
             'search' => 'nullable|string',
             'page'   => 'nullable|integer|min:1',
-            'limit'  => 'nullable|integer|min:1|max:15',
+            'limit'  => 'nullable|integer|min:1|max:1000',
+            'all'    => 'nullable',
         ]);
-        $query = Account::query();
+        $query = Account::query()->withCount('disbursementItems');
 
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -26,10 +27,15 @@ class AccountsController extends Controller
             });
         }
 
-        $account = $query->paginate($validated['limit'] ?? 15);
+        if ($request->boolean('all')) {
+            // For optimized dropdowns, we usually only want active accounts
+            $accounts = $query->where('status', 'active')->get();
+            return response()->json(['data' => $accounts]);
+        }
 
+        $accounts = $query->paginate($validated['limit'] ?? 15);
         
-        return response()->json($account);
+        return response()->json($accounts);
     }
 
     /**
@@ -53,21 +59,39 @@ class AccountsController extends Controller
     * WE WILL ONLY DO THIS IF THE ACCOUNT IS NOT ASSIGNED TO ANY TRANSACTION
     **/
     function destroy($id){
-        $account = Account::find($id);
+        $account = Account::withCount('disbursementItems')->find($id);
 
-        /** 
-         * Check if the account is assigned to any transaction
-         * If it is, return an error
-         * REMINDER TO IMPLEMENT THIS
-        **/
         if (!$account) {
             return response()->json([
                 'message' => 'Account not found',
             ], 404);
         }
+
+        if ($account->disbursement_items_count > 0) {
+            return response()->json([
+                'message' => 'Cannot delete account as it has associated disbursement items.',
+            ], 422);
+        }
+
         $account->delete();
         return response()->json([
             'message' => 'Account deleted successfully',
         ], 200);
+    }
+
+    /**
+     * Toggle the status of an account
+     */
+    function toggleStatus($id)
+    {
+        $account = Account::find($id);
+        if (!$account) {
+            return response()->json(['message' => 'Account not found'], 404);
+        }
+
+        $account->status = $account->status === 'active' ? 'inactive' : 'active';
+        $account->save();
+
+        return response()->json($account);
     }
 }

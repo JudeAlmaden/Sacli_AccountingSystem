@@ -49,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //Inbox
     Route::get('dashboard/inbox', function(){
         return Inertia::render('inbox');
-    });
+    })->name('inbox');
 });
 
 
@@ -65,3 +65,4 @@ Route::delete('/attachments/revert-temp', [App\Http\Controllers\TemporaryUploadC
 
 Route::post('/disbursements/{id}/approve', [App\Http\Controllers\DisbursementController::class, 'approve'])->name('disbursements.approve');
 Route::post('/disbursements/{id}/decline', [App\Http\Controllers\DisbursementController::class, 'decline'])->name('disbursements.decline');
+

@@ -13,4 +13,12 @@ class Account extends Model
         'account_type',
         'status',
     ];
+
+    /**
+     * Get the disbursement items associated with the account.
+     */
+    public function disbursementItems()
+    {
+        return $this->hasMany(DisbursementItem::class);
+    }
 }

@@ -168,17 +168,37 @@ export default function ChartOfAccounts() {
                 'X-CSRF-TOKEN': token,
             },
         })
-            .then(res => {
+            .then(async res => {
+                const data = await res.json();
                 if (res.ok) {
                     setIsDeleteOpen(false);
                     setAccountToDelete(null);
                     fetchAccounts(); // Refresh
                 } else {
-                    alert('Failed to delete account');
+                    alert(data.message || 'Failed to delete account');
                 }
             })
             .catch(err => console.error(err))
             .finally(() => setIsDeleting(false));
+    };
+
+    const handleToggleStatus = (id: number) => {
+        fetch(route('accounts.toggleStatus', id), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+        })
+            .then(res => {
+                if (res.ok) {
+                    fetchAccounts();
+                } else {
+                    alert('Failed to toggle status');
+                }
+            })
+            .catch(err => console.error(err));
     };
 
     const confirmDelete = (account: Account) => {
@@ -321,15 +341,23 @@ export default function ChartOfAccounts() {
                                         <TableCell className="text-muted-foreground">{account.account_description || '-'}</TableCell>
                                         <TableCell>{account.account_normal_side}</TableCell>
                                         <TableCell>
-                                            <Badge variant={account.status === 'active' ? 'default' : 'secondary'}>
-                                                {account.status}
-                                            </Badge>
+                                            <button
+                                                onClick={() => handleToggleStatus(account.id)}
+                                                className="hover:opacity-80 transition-opacity"
+                                                title={`Click to make ${account.status === 'active' ? 'inactive' : 'active'}`}
+                                            >
+                                                <Badge variant={account.status === 'active' ? 'default' : 'secondary'} className="cursor-pointer">
+                                                    {account.status}
+                                                </Badge>
+                                            </button>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 variant="destructive"
                                                 size="sm"
                                                 onClick={() => confirmDelete(account)}
+                                                disabled={account.disbursement_items_count ? account.disbursement_items_count > 0 : false}
+                                                title={account.disbursement_items_count && account.disbursement_items_count > 0 ? "Cannot delete used account" : "Delete account"}
                                             >
                                                 Delete
                                             </Button>

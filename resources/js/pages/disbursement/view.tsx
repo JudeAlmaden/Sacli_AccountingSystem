@@ -2,14 +2,25 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 import { Disbursement } from '@/types/database';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, FileText, Tag, Info } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, Tag, Info, AlertCircle, XCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 import { VoucherTemplate } from './components/VoucherTemplate';
 import { DisbursementSidebar } from './components/DisbursementSidebar';
@@ -38,6 +49,8 @@ export default function View() {
     const [disbursement, setDisbursement] = useState<Disbursement | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isActionLoading, setIsActionLoading] = useState(false);
+    const [isDeclineModalOpen, setIsDeclineModalOpen] = useState(false);
+    const [declineRemarks, setDeclineRemarks] = useState('');
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -61,8 +74,13 @@ export default function View() {
         fetchData();
     }, [id]);
 
-    const handleAction = async (action: 'approve' | 'decline') => {
+    const handleAction = async (action: 'approve' | 'decline', remarks?: string) => {
         if (!disbursement) return;
+
+        if (action === 'decline' && !remarks) {
+            setIsDeclineModalOpen(true);
+            return;
+        }
 
         const confirmMsg = action === 'approve'
             ? 'Are you sure you want to approve this disbursement?'
@@ -87,11 +105,13 @@ export default function View() {
                     'X-CSRF-TOKEN': token,
                 },
                 body: JSON.stringify({
-                    remarks: action === 'approve' ? 'Approved through dashboard.' : 'Declined through dashboard.'
+                    remarks: remarks || (action === 'approve' ? 'Approved through dashboard.' : 'Declined through dashboard.')
                 })
             });
 
             if (res.ok) {
+                setIsDeclineModalOpen(false);
+                setDeclineRemarks('');
                 await fetchData(); // Refresh data
             } else {
                 const data = await res.json();
@@ -144,6 +164,68 @@ export default function View() {
         });
     };
 
+    const handlePrint = () => {
+        const element = document.getElementById('voucher-paper');
+        if (!element) return;
+
+        const opt = {
+            margin: 0,
+            filename: `Voucher_${disbursement?.control_number}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                foreignObjectRendering: false,
+                onclone: (doc: Document) => {
+                    const style = doc.createElement("style");
+                    style.innerHTML = `
+                        * {
+                            color: rgb(0,0,0) !important;
+                            background-color: rgb(255,255,255) !important;
+                            border-color: rgb(0,0,0) !important;
+                            box-sizing: border-box !important;
+                        }
+                    `;
+                    doc.head.appendChild(style);
+                }
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(element).set(opt as any).save().catch((err: any) => {
+            console.error('PDF Generation failed:', err);
+            alert('Failed to generate PDF. Please try using the browser print function (Ctrl+P).');
+        });
+    };
+
+    const RejectionNotice = () => {
+        if (disbursement?.status !== 'rejected') return null;
+
+        const rejectionTracking = disbursement.tracking
+            ?.filter(t => t.action === 'rejected' && t.acted_at)
+            .sort((a, b) => new Date(b.acted_at!).getTime() - new Date(a.acted_at!).getTime())[0];
+
+        if (!rejectionTracking) return null;
+
+        return (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/20 text-destructive mb-6 shadow-sm">
+                <XCircle className="h-4 w-4" />
+                <AlertTitle className="font-bold flex items-center gap-2">
+                    Disbursement Rejected
+                </AlertTitle>
+                <AlertDescription className="mt-2 space-y-2">
+                    <p className="font-medium">Reason: <span className="italic">"{rejectionTracking.remarks}"</span></p>
+                    <div className="flex items-center gap-2 text-[10px] opacity-80 decoration-dotted underline">
+                        <span>Restricted by {rejectionTracking.role}</span>
+                        <span>•</span>
+                        <span>{formatDate(rejectionTracking.acted_at ?? undefined)}</span>
+                    </div>
+                </AlertDescription>
+            </Alert>
+        );
+    };
+
     if (isLoading) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
@@ -193,15 +275,19 @@ export default function View() {
                         <Badge className="text-sm px-3 py-1" variant={getStatusBadgeVariant(disbursement.status)}>
                             {disbursement.status?.toUpperCase()}
                         </Badge>
-                        <Button variant="outline" onClick={() => window.print()} className="hidden sm:flex items-center gap-2">
-                            Print Voucher
-                        </Button>
+                        {disbursement.status === 'approved' && (
+                            <Button variant="outline" onClick={handlePrint} className="hidden sm:flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                Download PDF
+                            </Button>
+                        )}
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8 items-start">
                     <div className="flex flex-col gap-6 w-full">
                         {/* Summary Info */}
+                        <RejectionNotice />
                         <Card>
                             <CardHeader className="pb-3">
                                 <CardTitle className="text-xl flex items-center gap-2">
@@ -273,6 +359,39 @@ export default function View() {
                     </Button>
                 </div>
             )}
+
+            {/* Decline Reason Modal */}
+            <Dialog open={isDeclineModalOpen} onOpenChange={setIsDeclineModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertCircle className="h-5 w-5" />
+                            Decline Disbursement
+                        </DialogTitle>
+                        <DialogDescription>
+                            Please provide a reason for declining this disbursement. This will be sent as a notification to the person who generated it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <textarea
+                            className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            placeholder="Enter your reason here..."
+                            value={declineRemarks}
+                            onChange={(e) => setDeclineRemarks(e.target.value)}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeclineModalOpen(false)}>Cancel</Button>
+                        <Button
+                            variant="destructive"
+                            disabled={!declineRemarks.trim() || isActionLoading}
+                            onClick={() => handleAction('decline', declineRemarks)}
+                        >
+                            {isActionLoading ? 'Processing...' : 'Confirm Decline'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

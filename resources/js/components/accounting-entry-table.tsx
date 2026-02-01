@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ChevronDown, Plus, X } from 'lucide-react';
+import { ChevronDown, Plus, X, Search } from 'lucide-react';
+import { route } from 'ziggy-js';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,33 @@ export default function AccountingEntryTable({
         { id: '3', account: null, ref: '', debit: 0, credit: null },
     ]);
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const [allAccounts, setAllAccounts] = useState<Account[]>([]);
+    const [isAccountsLoading, setIsAccountsLoading] = useState(false);
+
+    // Get CSRF token
+    const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+    const token = meta?.content || '';
+
+    // Fetch all accounts once on mount for optimized selection
+    useEffect(() => {
+        setIsAccountsLoading(true);
+        fetch(`${route('accounts.index')}?all=true`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            },
+        })
+            .then(res => res.json())
+            .then(data => {
+                setAllAccounts(data.data || []);
+                setIsAccountsLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to fetch accounts pre-emptively', err);
+                setIsAccountsLoading(false);
+            });
+    }, [token]);
 
     const addNewRow = () => {
         const newId = String(Math.max(...rows.map(r => parseInt(r.id) || 0), 0) + 1);
@@ -194,23 +222,27 @@ export default function AccountingEntryTable({
                                         <div className="flex items-center gap-2 relative">
                                             <button
                                                 onClick={() => setOpenDropdownId(openDropdownId === row.id ? null : row.id)}
-                                                className="flex h-5 w-5 items-center justify-center text-muted-foreground transition-colors hover:text-accent shrink-0"
+                                                className="flex flex-1 items-center gap-3 text-left p-1 rounded-md transition-colors hover:bg-secondary/20 group/select"
                                                 title="Select account"
                                             >
-                                                <ChevronDown size={16} />
-                                            </button>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-foreground">
-                                                    {row.account?.account_name || 'Select Account'}
-                                                </span>
-                                                {row.account && (
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {row.account.account_code} - {row.account.account_type}
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background group-hover/select:border-primary/30 group-hover/select:text-primary transition-colors shrink-0">
+                                                    <Search size={14} className="opacity-40 group-hover/select:opacity-100" />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className={`text-sm font-semibold truncate ${row.account ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                                        {row.account?.account_name || 'Select Account'}
                                                     </span>
-                                                )}
-                                            </div>
+                                                    {row.account && (
+                                                        <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                                                            {row.account.account_code} • {row.account.account_type}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <ChevronDown size={14} className="ml-auto opacity-30 group-hover/select:opacity-100 transition-opacity" />
+                                            </button>
                                             {openDropdownId === row.id && (
                                                 <AccountSearchDropdown
+                                                    accounts={allAccounts}
                                                     onSelect={(account) => selectAccount(row.id, account)}
                                                     onClose={() => setOpenDropdownId(null)}
                                                 />

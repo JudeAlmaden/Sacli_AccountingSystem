@@ -21,7 +21,7 @@ export function VoucherTemplate({ disbursement }: VoucherTemplateProps) {
     };
 
     return (
-        <div className="bg-white text-black pt-[1cm] px-[2.5cm] pb-[2.5cm] shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col font-serif shrink-0 mb-8" style={{ color: '#1a1a1a' }}>
+        <div id="voucher-paper" className="bg-white text-black pt-[1cm] px-[2.5cm] pb-[2.5cm] shadow-2xl mx-auto w-[210mm] min-h-[297mm] flex flex-col font-serif shrink-0 mb-8" style={{ color: '#1a1a1a' }}>
             {/* Header */}
             <div className="flex flex-col items-center mb-0 relative">
                 <h1 className="text-xl font-bold uppercase text-center leading-tight">St. Anne College Lucena, Inc.</h1>

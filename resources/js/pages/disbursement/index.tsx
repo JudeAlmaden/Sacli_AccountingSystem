@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { BreadcrumbItem } from '@/types';
+import { Head, usePage } from '@inertiajs/react';
+import type { SharedData } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Link } from '@inertiajs/react'
+import { Link } from '@inertiajs/react';
 import { Calendar, Search, Filter, ArrowUpDown, Inbox, MoreHorizontal } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -42,14 +43,12 @@ interface Disbursement {
     total_amount?: number;
 }
 
-interface Statistics {
-    total: number;
-    pending: number;
-    approved: number;
-    rejected: number;
-}
+
 
 export default function Disbursements() {
+    const { user } = usePage<SharedData>().props;
+    const canGenerate = user?.roles?.some(role => ['admin', 'accounting assistant'].includes(role.toLowerCase()));
+
     // Get CSRF token
     const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
     const token = meta?.content || '';
@@ -67,13 +66,7 @@ export default function Disbursements() {
     });
     const [isLoading, setIsLoading] = useState(true);
 
-    // Statistics state
-    const [statistics, setStatistics] = useState<Statistics>({
-        total: 0,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-    });
+
 
     // Search State
     const [search, setSearch] = useState('');
@@ -131,10 +124,7 @@ export default function Disbursements() {
                     to: data.to,
                 });
 
-                // Update statistics if provided
-                if (data.statistics) {
-                    setStatistics(data.statistics);
-                }
+
 
                 setIsLoading(false);
             })
@@ -205,56 +195,18 @@ export default function Disbursements() {
                         <h2 className="text-3xl text-header">Disbursements</h2>
                         <p className="text-muted-foreground">Manage and track all disbursement requests.</p>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline">
-                            <Inbox className="mr-2 h-4 w-4" />
-                            Inbox
-                        </Button>
-                        <Button asChild>
-                            <Link href={route('disbursement.generate')}>
-                                Generate Disbursement
-                            </Link>
-                        </Button>
-                    </div>
+                    {canGenerate && (
+                        <div className="flex gap-2">
+                            <Button asChild>
+                                <Link href={route('disbursement.generate')}>
+                                    Generate Disbursement
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card className="bg-card">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Total Disbursements</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{statistics.total}</div>
-                        </CardContent>
-                    </Card>
 
-                    <Card className="bg-card">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-yellow-600">{statistics.pending}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-card">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600">{statistics.approved}</div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-card">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Rejected</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-red-600">{statistics.rejected}</div>
-                        </CardContent>
-                    </Card>
-                </div>
 
 
                 <div className="flex items-center gap-2">
@@ -368,7 +320,6 @@ export default function Disbursements() {
                                 <TableHead>Control Number</TableHead>
                                 <TableHead>Title</TableHead>
                                 <TableHead>Description</TableHead>
-                                <TableHead>Amount</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead>Date Created</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
@@ -394,11 +345,6 @@ export default function Disbursements() {
                                             {disbursement.description}
                                         </TableCell>
                                         <TableCell>
-                                            {disbursement.total_amount
-                                                ? formatCurrency(disbursement.total_amount)
-                                                : '-'}
-                                        </TableCell>
-                                        <TableCell>
                                             <Badge variant={getStatusBadgeVariant(disbursement.status)}>
                                                 {disbursement.status}
                                             </Badge>
@@ -409,9 +355,6 @@ export default function Disbursements() {
                                                 <Link href={route('disbursement.view', disbursement.id)}>
                                                     View
                                                 </Link>
-                                                <Button variant="outline" size="sm">
-                                                    Edit
-                                                </Button>
                                             </div>
                                         </TableCell>
                                     </TableRow>

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\User;
+use App\Models\Notification;
 
 class DisbursementController extends Controller
 {
@@ -27,12 +29,6 @@ class DisbursementController extends Controller
 
         // Build the query
         $query = Disbursement::query()->withCount('items');
-
-        // Add total_amount as a computed field by summing disbursement_items
-        $query->addSelect([
-            'disbursements.*',
-            DB::raw('(SELECT COALESCE(SUM(amount), 0) FROM disbursement_items WHERE disbursement_items.disbursement_id = disbursements.id) as total_amount')
-        ]);
 
         // Search functionality (control_number, title, description)
         if (!empty($validated['search'])) {
@@ -71,8 +67,7 @@ class DisbursementController extends Controller
         // Get paginated results
         $disbursements = $query->paginate(10);
 
-        // Calculate statistics
-        $statistics = $this->calculateStatistics();
+
 
         // Return JSON response with pagination data and statistics
         return response()->json([
@@ -85,7 +80,7 @@ class DisbursementController extends Controller
             'from' => $disbursements->firstItem(),
             'to' => $disbursements->lastItem(),
             'per_page' => $disbursements->perPage(),
-            'statistics' => $statistics,
+
         ]);
     }
 
@@ -173,6 +168,9 @@ class DisbursementController extends Controller
             'remarks' => 'Voucher generated and approved by assistant.',
             'acted_at' => now(),
         ]);
+
+        // Notify Accounting Head(s) - Step 2
+        $this->notifyUsersWithRole('accounting head', 'New Disbursement for Review', "A new disbursement ({$disbursement->control_number}) has been generated and requires your approval.", route('disbursement.view', ['id' => $disbursement->id]));
        
         return response()->json($disbursement);
     }
@@ -220,6 +218,21 @@ class DisbursementController extends Controller
             'acted_at' => now(),
         ]);
 
+        // Trigger Notifications
+        if (isset($stepRoles[$nextStep])) {
+            $this->notifyUsersWithRole($stepRoles[$nextStep], 'Review Required', "Disbursement {$disbursement->control_number} needs your approval.", route('disbursement.view', ['id' => $disbursement->id]));
+        } elseif ($status === 'approved') {
+            $initiator = $disbursement->tracking()->where('step', 1)->first();
+            if ($initiator) {
+                Notification::create([
+                    'user_id' => $initiator->handled_by,
+                    'title' => 'Disbursement Approved',
+                    'message' => "Your disbursement ({$disbursement->control_number}) has been fully approved.",
+                    'link' => route('disbursement.view', ['id' => $disbursement->id])
+                ]);
+            }
+        }
+
         return response()->json([
             'message' => 'Disbursement approved successfully.',
             'disbursement' => $disbursement
@@ -258,6 +271,18 @@ class DisbursementController extends Controller
             'acted_at' => now(),
         ]);
 
+        // Notify Initiator
+        $initiator = $disbursement->tracking()->where('step', 1)->first();
+        if ($initiator) {
+            $reason = $request->remarks ?? 'No reason provided.';
+            Notification::create([
+                'user_id' => $initiator->handled_by,
+                'title' => 'Disbursement Declined',
+                'message' => "Your disbursement ({$disbursement->control_number}) was declined. Reason: {$reason}",
+                'link' => route('disbursement.view', ['id' => $disbursement->id])
+            ]);
+        }
+
         return response()->json([
             'message' => 'Disbursement declined successfully.',
             'disbursement' => $disbursement
@@ -265,17 +290,20 @@ class DisbursementController extends Controller
     }
 
     /**
-     * Calculate statistics for disbursements
+     * Helper to notify users with a specific role.
      */
-    private function calculateStatistics(): array
+    private function notifyUsersWithRole($role, $title, $message, $link)
     {
-        $statistics = [
-            'total' => Disbursement::count(),
-            'pending' => Disbursement::where('status', 'pending')->count(),
-            'approved' => Disbursement::where('status', 'approved')->count(),
-            'rejected' => Disbursement::where('status', 'rejected')->count(),
-        ];
-
-        return $statistics;
+        $users = User::role($role)->get();
+        foreach ($users as $user) {
+            Notification::create([
+                'user_id' => $user->id,
+                'title' => $title,
+                'message' => $message,
+                'link' => $link
+            ]);
+        }
     }
+
+
 }
