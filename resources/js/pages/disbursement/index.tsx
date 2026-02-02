@@ -43,17 +43,15 @@ interface Disbursement {
     total_amount?: number;
 }
 
-
-
 export default function Disbursements() {
     const { user } = usePage<SharedData>().props;
-    const canGenerate = user?.roles?.some(role => ['admin', 'accounting assistant'].includes(role.toLowerCase()));
+    const canGenerate = user?.roles?.some(role => 
+        ['admin', 'accounting assistant'].includes(typeof role === 'string' ? role.toLowerCase() : role)
+    );
 
-    // Get CSRF token
     const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
     const token = meta?.content || '';
-
-    // State for disbursements (paginated data)
+ 
     const [disbursements, setDisbursements] = useState<Disbursement[]>([]);
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -68,11 +66,11 @@ export default function Disbursements() {
 
 
 
-    // Search State
+
     const [search, setSearch] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Filter States
+
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -81,7 +79,7 @@ export default function Disbursements() {
 
     const fetchDisbursements = (url?: string | null) => {
         setIsLoading(true);
-        // Construct URL with all filter params
+       
         const targetUrl = new URL(url || route('disbursements.index'));
 
         if (searchQuery) {
@@ -135,7 +133,6 @@ export default function Disbursements() {
             });
     };
 
-    // Debounce search effect
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             setSearchQuery(search);
@@ -143,13 +140,12 @@ export default function Disbursements() {
         return () => clearTimeout(timeoutId);
     }, [search]);
 
-    // Fetch when filters change
     useEffect(() => {
         fetchDisbursements();
     }, [searchQuery, dateFrom, dateTo, statusFilter, sortBy, sortOrder]);
 
     const getStatusBadgeVariant = (status: string) => {
-        switch (status.toLowerCase()) {
+        switch (status?.toLowerCase()) {
             case 'completed':
                 return 'default';
             case 'pending':
@@ -205,9 +201,6 @@ export default function Disbursements() {
                         </div>
                     )}
                 </div>
-
-
-
 
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1">

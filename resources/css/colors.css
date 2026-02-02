@@ -1,10 +1,18 @@
-/* Custom Component Colors - Reusable across components */
-
 @layer utilities {
-
-    /* background and Texts */
     .bg-default-white{
-        @apply bg-[#f7fdf6]
+        @apply bg-[#fafafa]
+    }
+
+    .bg-card-subtle {
+        @apply bg-[#f9fff9];
+    }
+
+    .bg-notification-btn {
+        @apply bg-[#d5e6d7];
+    }
+
+    .bg-notification-icon {
+        @apply bg-[#16c42d];
     }
 
     .bg-subtle-green {
@@ -32,8 +40,6 @@
         font-weight: 900;
         letter-spacing: -0.025em;
     }
-
-    /* Pulsating status dot animations */
     @keyframes pulse-dot {
         0% {
             box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
@@ -67,7 +73,5 @@
         @apply inline-block size-2 rounded-full bg-red-600;
         animation: pulse-dot-red 1.5s infinite;
     }
-
-    /* Btn colors are placed by btn variants */
     
 }
