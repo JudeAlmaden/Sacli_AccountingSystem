@@ -138,73 +138,24 @@ export default function AccountingEntryTable({
     }, [preparedData, onDataChange]);
 
     return (
-        <Card className="border-border bg-card overflow-visible">
-            <div className="border-b border-border p-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-foreground mb-2 flex items-center gap-1">
-                            Title
-                            <span className="text-destructive text-xs">*</span>
-                        </label>
-                        <Input
-                            id="title"
-                            value={title}
-                            onChange={(e) => onTitleChange(e.target.value)}
-                            placeholder="Disbursement - December 31, 2024"
-                            className={`bg-background focus-visible:ring-primary shadow-sm ${errors.title ? 'border-destructive' : ''}`}
-                        />
-                        {errors.title && <p className="text-[10px] text-destructive mt-1 font-medium">{errors.title[0]}</p>}
-                    </div>
-                    <div>
-                        <label htmlFor="date" className="block text-sm font-medium text-foreground mb-2 flex items-center gap-1">
-                            Date of transaction
-                            <span className="text-destructive text-xs">*</span>
-                        </label>
-                        <Input
-                            id="date"
-                            type="date"
-                            value={date}
-                            onChange={(e) => onDateChange(e.target.value)}
-                            className={`bg-background focus-visible:ring-primary shadow-sm ${errors.date ? 'border-destructive' : ''}`}
-                        />
-                        {errors.date && <p className="text-[10px] text-destructive mt-1 font-medium">{errors.date[0]}</p>}
-                    </div>
-                </div>
-                <div className="mt-4">
-                    <label htmlFor="description" className="block text-sm font-medium text-foreground mb-2 flex items-center gap-1">
-                        Description
-                        <span className="text-destructive text-xs">*</span>
-                    </label>
-                    <Input
-                        id="description"
-                        value={description}
-                        onChange={(e) => onDescriptionChange(e.target.value)}
-                        placeholder="Add any notes or details about this disbursement..."
-                        className={`bg-background focus-visible:ring-primary shadow-sm ${errors.description ? 'border-destructive' : ''}`}
-                    />
-                    {errors.description && <p className="text-[10px] text-destructive mt-1 font-medium">{errors.description[0]}</p>}
-                </div>
-            </div>
-
-            <DottedSeparator className="my-4" color="#d1d5db" />
-
+        <Card className="border-border p-0 overflow-visible">
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse relative table-fixed">
                     <thead>
-                        <tr className="border-b border-border bg-zinc-900 overflow-hidden rounded-t-lg">
-                            <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-auto first:rounded-tl-lg">
+                        <tr className="border-b border-border bg-table-head overflow-hidden rounded-t-md">
+                            <th className="px-6 py-5 text-left text-xs font-bold text-white uppercase tracking-wider w-auto first:rounded-tl-lg">
                                 Account
                             </th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider border-l border-white/10 w-32">
+                            <th className="px-6 py-5 text-center text-xs font-bold text-white uppercase tracking-wider border-l border-white/10 w-32">
                                 Ref
                             </th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider border-r border-white/10 w-40">
+                            <th className="px-6 py-5 text-center text-xs font-bold text-white uppercase tracking-wider border-r border-white/10 w-40">
                                 Debit
                             </th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider w-40">
+                            <th className="px-6 py-5 text-center text-xs font-bold text-white uppercase tracking-wider w-40">
                                 Credit
                             </th>
-                            <th className="w-16 bg-zinc-900 last:rounded-tr-lg" />
+                            <th className="w-16 last:rounded-tr-lg" />
                         </tr>
                     </thead>
                     <tbody>
@@ -340,8 +291,8 @@ export default function AccountingEntryTable({
                     </tfoot>
                 </table>
             </div>
-
-            <div className="p-4 border-t border-border bg-card flex items-center justify-between">
+            <DottedSeparator/>
+            <div className="px-5 pb-4 border-border bg-card flex items-center justify-between">
                 <div className="text-xs text-muted-foreground italic">
                     {!isBalanced && "Debit and Credit must be balanced."}
                     {isBalanced && rows.filter(r => r.account).length === 0 && "Add at least one accounting entry."}

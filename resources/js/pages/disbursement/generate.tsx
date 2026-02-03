@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import type { BreadcrumbItem } from '@/types';
 import AccountingEntryTable from '@/components/accounting-entry-table';
 import { DisbursementAttachment } from './components/DisbursementAttachment';
+import { DottedSeparator } from '@/components/dotted-line';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -17,7 +20,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: route('disbursements'),
     },
     {
-        title: 'Generate',
+        title: 'Create Disbursement',
         href: route('disbursement.generate'),
     },
 ];
@@ -31,6 +34,9 @@ export default function GenerateDisbursement() {
     const [attachments, setAttachments] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
+
+    const TITLE_MAX_LENGTH = 50;
+    const DESCRIPTION_MAX_LENGTH = 70;
 
     // Get CSRF token
     const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
@@ -92,25 +98,105 @@ export default function GenerateDisbursement() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Generate Disbursement" />
+            <Head title="Create Disbursement" />
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-                <AccountingEntryTable
-                    title={title}
-                    date={date}
-                    description={description}
-                    onTitleChange={setTitle}
-                    onDateChange={setDate}
-                    onDescriptionChange={setDescription}
-                    onDataChange={setDisbursementData}
-                    onSave={handleSave}
-                    onCancel={handleCancel}
-                    saveButtonText={isSubmitting ? "Saving..." : "Save Disbursement"}
-                    isLoading={isSubmitting}
-                    errors={errors}
-                />
-
                 <div className="space-y-6">
+                    <Card>
+                        <div className="px-10 py-2">
+                           <div className="grid gap-10 md:grid-cols-2">
+                                <div>
+                                    <label htmlFor="title" className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
+                                        Title
+                                        <span className="text-destructive text-xs">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Input
+                                            id="title"
+                                            value={title}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (value.length <= TITLE_MAX_LENGTH) {
+                                                    setTitle(value);
+                                                }
+                                            }}
+                                            maxLength={TITLE_MAX_LENGTH}
+                                            placeholder="Disbursement - December 31, 2024"
+                                            className={`bg-background border-gray-400 border-[1.6px] focus-visible:ring-primary pr-14 ${errors.title ? 'border-destructive' : ''}`}
+                                        />
+                                        {title.length > 0 && (
+                                            <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium transition-all duration-200 animate-in fade-in ${
+                                                title.length >= TITLE_MAX_LENGTH - 10 ? 'text-red-500' : 'text-muted-foreground'
+                                            }`}>
+                                                {title.length}/{TITLE_MAX_LENGTH}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {errors.title && <p className="text-[10px] text-destructive mt-1 font-medium">{errors.title[0]}</p>}
+                                </div>
+                                <div className='ml-30'>
+                                    <label htmlFor="date" className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
+                                        Date of transaction
+                                        <span className="text-destructive text-xs">*</span>
+                                    </label>
+                                    <DatePicker
+                                        value={date}
+                                        onChange={setDate}
+                                        placeholder="Select transaction date"
+                                        className={`${errors.date ? 'border-destructive' : ''} max-w-[310px] border-gray-400 border-[1.6px]`}
+                                    />
+                                    {errors.date && <p className="text-[10px] text-destructive mt-1 font-medium">{errors.date[0]}</p>}
+                                </div>
+                            </div>
+                            <div className="mt-4">
+                                <label htmlFor="description" className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
+                                    Description
+                                    <span className="text-destructive text-xs">*</span>
+                                </label>
+                                <div className="relative">
+                                    <Input
+                                        id="description"
+                                        value={description}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (value.length <= DESCRIPTION_MAX_LENGTH) {
+                                                setDescription(value);
+                                            }
+                                        }}
+                                        maxLength={DESCRIPTION_MAX_LENGTH}
+                                        placeholder="Add any notes or details about this disbursement..."
+                                        className={`bg-background focus-visible:ring-primary shadow-sm pr-14 ${errors.description ? 'border-destructive' : ''}  border-gray-400 border-[1.6px]`}
+                                    />
+                                    {description.length > 0 && (
+                                        <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium transition-all duration-200 animate-in fade-in ${
+                                            description.length >= DESCRIPTION_MAX_LENGTH - 10 ? 'text-red-500' : 'text-muted-foreground'
+                                        }`}>
+                                            {description.length}/{DESCRIPTION_MAX_LENGTH}
+                                        </span>
+                                    )}
+                                </div>
+                                {errors.description && <p className="text-[10px] text-destructive mt-1 font-medium">{errors.description[0]}</p>}
+                            </div>
+                        </div>
+                    </Card>
+
+                    <AccountingEntryTable
+                        title={title}
+                        date={date}
+                        description={description}
+                        onTitleChange={setTitle}
+                        onDateChange={setDate}
+                        onDescriptionChange={setDescription}
+                        onDataChange={setDisbursementData}
+                        onSave={handleSave}
+                        onCancel={handleCancel}
+                        saveButtonText={isSubmitting ? "Saving..." : "Save Disbursement"}
+                        isLoading={isSubmitting}
+                        errors={errors}
+                    />
+                </div>
+
+                <div className="sticky top-5 self-start h-fit max-h-[calc(100vh-6rem)] overflow-auto">
                     <DisbursementAttachment onFilesChange={setAttachments} />
                 </div>
             </div>

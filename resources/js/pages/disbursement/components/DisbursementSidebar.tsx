@@ -11,8 +11,8 @@ interface DisbursementSidebarProps {
 export function DisbursementSidebar({ currentStep, tracking, attachments = [] }: DisbursementSidebarProps) {
     return (
         <div className="flex flex-col gap-6">
-            <DisbursementAttachment attachments={attachments} mode="view" />
             <DisbursementStatusTracking currentStep={currentStep} tracking={tracking} />
+            <DisbursementAttachment attachments={attachments} mode="view" />
         </div>
     );
 }

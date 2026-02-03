@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from '@/components/ui/date-picker';
 import { useEffect, useState } from 'react';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
@@ -194,7 +195,7 @@ export default function Disbursements() {
                         <div className="flex gap-2">
                             <Button asChild>
                                 <Link href={route('disbursement.generate')}>
-                                    Generate Disbursement
+                                    Create Disbursement
                                 </Link>
                             </Button>
                         </div>
@@ -236,26 +237,16 @@ export default function Disbursements() {
                                 <div className="space-y-3">
                                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date Range</Label>
                                     <div className="flex flex-col gap-2">
-                                        <div className="relative">
-                                            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-                                            <Input
-                                                type="date"
-                                                value={dateFrom}
-                                                onChange={(e) => setDateFrom(e.target.value)}
-                                                className="pl-8 h-8 text-xs w-full"
-                                                placeholder="From"
-                                            />
-                                        </div>
-                                        <div className="relative">
-                                            <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-                                            <Input
-                                                type="date"
-                                                value={dateTo}
-                                                onChange={(e) => setDateTo(e.target.value)}
-                                                className="pl-8 h-8 text-xs w-full"
-                                                placeholder="To"
-                                            />
-                                        </div>
+                                        <DatePicker
+                                            value={dateFrom}
+                                            onChange={setDateFrom}
+                                            placeholder="From date"
+                                        />
+                                        <DatePicker
+                                            value={dateTo}
+                                            onChange={setDateTo}
+                                            placeholder="To date"
+                                        />
                                     </div>
                                 </div>
 

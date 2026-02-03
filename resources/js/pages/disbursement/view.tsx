@@ -24,6 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 import { VoucherTemplate } from './components/VoucherTemplate';
 import { DisbursementSidebar } from './components/DisbursementSidebar';
+import { DottedSeparator } from '@/components/dotted-line';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -284,38 +285,39 @@ export default function View() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-8 items-start">
-                    <div className="flex flex-col gap-6 w-full">
-                        {/* Summary Info */}
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-6 items-start">
+                    <div className="flex flex-col gap-6 w-full min-w-0">
                         <RejectionNotice />
                         <Card>
-                            <CardHeader className="pb-3">
+                            <CardHeader>
                                 <CardTitle className="text-xl flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-primary" />
+                                    <FileText className="h-6 w-6 text-primary -ml-1" />
                                     Disbursement Info
                                 </CardTitle>
+                                <p className='ml-7 -mt-1 text-sm opacity-60'>Record of approved fund disbursements</p>
                             </CardHeader>
-                            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <DottedSeparator/>
+                            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-10 pb-1">
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-2">
                                         <Tag className="h-3 w-3" />
                                         Title
                                     </p>
-                                    <p className="text-sm font-semibold">{disbursement.title}</p>
+                                    <p className="text-sm ml-5 font-semibold">{disbursement.title}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-2">
                                         <Calendar className="h-3 w-3" />
                                         Date Created
                                     </p>
-                                    <p className="text-sm font-semibold">{formatDate(disbursement.created_at)}</p>
+                                    <p className="text-sm ml-5 font-semibold">{formatDate(disbursement.created_at)}</p>
                                 </div>
                                 <div className="sm:col-span-2 space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase flex items-center gap-2">
                                         <Info className="h-3 w-3" />
                                         Description
                                     </p>
-                                    <p className="text-sm text-foreground bg-muted/30 p-2 rounded border border-border/50">
+                                    <p className="text-sm ml-5 text-foreground">
                                         {disbursement.description || 'No description provided.'}
                                     </p>
                                 </div>
@@ -323,8 +325,10 @@ export default function View() {
                         </Card>
 
                         {/* Main Voucher - Paper A4 Look */}
-                        <div className="overflow-x-auto pb-8 flex justify-center bg-gray-100/50 rounded-xl border p-4 sm:p-8">
-                            <VoucherTemplate disbursement={disbursement} />
+                        <div className="overflow-x-auto pb-4 flex justify-center bg-gray-100/50 rounded-xl border p-2 sm:p-4">
+                            <div className="w-full max-w-[210mm] min-w-0">
+                                <VoucherTemplate disbursement={disbursement} />
+                            </div>
                         </div>
                     </div>
 
