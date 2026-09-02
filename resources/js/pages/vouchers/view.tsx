@@ -189,7 +189,8 @@ export default function View() {
         const element = document.getElementById('voucher-paper');
         if (!element) return;
 
-        const pdfFormat = sheetSize === 'half' ? 'a5' : 'a4';
+        const isHalf = sheetSize === 'half';
+        const jsPdfFormat = isHalf ? [210, 148.5] : 'a4';
 
         const opt = {
             margin: 0,
@@ -201,19 +202,26 @@ export default function View() {
                 backgroundColor: '#ffffff',
                 foreignObjectRendering: false,
                 onclone: (doc: Document) => {
+                    const el = doc.getElementById('voucher-paper');
+                    if (el) {
+                        el.style.boxShadow = 'none';
+                        el.style.margin = '0';
+                    }
                     const style = doc.createElement("style");
                     style.innerHTML = `
+                        #voucher-paper {
+                            box-shadow: none !important;
+                            margin: 0 !important;
+                        }
                         * {
-                            color: rgb(0,0,0) !important;
-                            background-color: rgb(255,255,255) !important;
-                            border-color: rgb(0,0,0) !important;
                             box-sizing: border-box !important;
                         }
                     `;
                     doc.head.appendChild(style);
                 }
             },
-            jsPDF: { unit: 'mm', format: pdfFormat, orientation: 'portrait' }
+            jsPDF: { unit: 'mm', format: jsPdfFormat, orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
         html2pdf().from(element).set(opt as any).save().catch((err: any) => {
@@ -295,12 +303,12 @@ export default function View() {
                         <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
                             <span>Sheet size:</span>
                             <Select value={sheetSize} onValueChange={(v) => setSheetSize(v as 'full' | 'half')}>
-                                <SelectTrigger className="h-8 w-[130px]">
+                                <SelectTrigger className="h-8 w-[140px]">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="full">Full (A4)</SelectItem>
-                                    <SelectItem value="half">Half (A5)</SelectItem>
+                                    <SelectItem value="half">A4 (Half)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>

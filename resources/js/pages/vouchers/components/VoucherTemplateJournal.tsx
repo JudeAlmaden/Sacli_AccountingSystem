@@ -13,7 +13,9 @@ export function VoucherTemplateJournal({ journal, sheetSize = 'full' }: VoucherT
     const totalDebit = debitItems.reduce((sum, item) => sum + Number(item.amount), 0);
     const totalCredit = creditItems.reduce((sum, item) => sum + Number(item.amount), 0);
 
-    const emptyRowsNeeded = Math.max(0, 11 - allItems.length);
+    const emptyRowsNeeded = sheetSize === 'half'
+        ? Math.max(0, 4 - allItems.length)
+        : Math.max(0, 10 - allItems.length);
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return '';
@@ -36,8 +38,8 @@ export function VoucherTemplateJournal({ journal, sheetSize = 'full' }: VoucherT
     ];
 
     const sizeClasses = sheetSize === 'half'
-        ? 'max-w-[210mm] min-h-[148mm]'
-        : 'max-w-[210mm] min-h-[297mm]';
+        ? 'w-[210mm] max-h-[148.5mm] h-[148.5mm] overflow-hidden'
+        : 'w-[210mm] max-h-[297mm] h-[297mm] overflow-hidden';
 
     return (
         <div
@@ -45,7 +47,7 @@ export function VoucherTemplateJournal({ journal, sheetSize = 'full' }: VoucherT
             className={`bg-white text-black w-full mx-auto shadow-2xl ${sizeClasses}`}
             style={{ fontFamily: 'Times New Roman, serif' }}
         >
-            <div className="px-[0.8cm] py-[0.8cm] pb-[2cm] flex flex-col font-serif min-h-full">
+            <div className={`px-[0.8cm] py-[0.8cm] flex flex-col font-serif h-full justify-between`}>
                 {/* Header */}
                 <div className="text-center mb-0">
                     <img src="/Sacli/Format_3.jpg" alt="ST. ANNE COLLEGE LUCENA, INC." className="w-full max-w-[400px] mx-auto mb-2" />

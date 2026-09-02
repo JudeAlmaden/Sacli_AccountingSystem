@@ -109,7 +109,7 @@ export default function AppSidebarLayout({
         <AppShell variant="sidebar">
             <Toaster position="bottom-right" expand={true} richColors />
             <AppSidebar />
-            <AppContent variant="sidebar" className="overflow-visible bg-default-white px-16">
+            <AppContent variant="sidebar" className="overflow-visible bg-default-white px-4 sm:px-6 md:px-8">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 <div className="pt-8">
                     {children}

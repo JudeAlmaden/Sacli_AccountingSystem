@@ -75,7 +75,7 @@ export default function Dashboard({ stats }: DashboardProps) {
                 </div>
 
                 {/* Stat cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">
@@ -174,7 +174,7 @@ export default function Dashboard({ stats }: DashboardProps) {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
                             <div className="flex items-center gap-3 rounded-lg border p-4">
                                 <Clock className="h-8 w-8 text-amber-500" />
                                 <div>
